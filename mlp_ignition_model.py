@@ -395,7 +395,7 @@ preprocessor = ColumnTransformer(
 )
 
 mlp = MLPClassifier(
-    hidden_layer_sizes=(64,),  # paper used one hidden layer; use 64 neurons for a fast/stable starter. Try (100,) for exact paper-style size.
+    hidden_layer_sizes=(100,),  # paper used one hidden layer; use 64 neurons for a fast/stable starter. Try (100,) for exact paper-style size.
     activation="relu",
     alpha=0.01,
     learning_rate_init=1e-3,
