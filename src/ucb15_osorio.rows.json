@@ -1,0 +1,52 @@
+{
+  "src\\ucb15_osorio.exp.md": {
+    "rows": [
+      {
+        "article_mla": "Osorio, A., et al. \"...\" Proceedings of the Combustion Institute ...",
+        "authors": "Osorio, A., ...",
+        "doi": "https://doi.org/...",
+        "geometry_of_sample": "wire",
+        "dimensions_of_sample": "0.50 mm copper core and 0.30 mm ETFE insulation thickness",
+        "material_of_sample": "ETFE",
+        "oxygen_concentration": "20-32%",
+        "pressure": "100 kPa",
+        "flow_velocity": "0.12 m/s",
+        "gravity_gearth": 1.0,
+        "experimental_facility": "Parabolic Aircraft",
+        "ignition_method": "Wire",
+        "ignition_power": "92 W",
+        "ignition_time": "12 s",
+        "chamber_diameter": "60 mm",
+        "ignition_extinction": null,
+        "fsr": null,
+        "hrr": null,
+        "smoke_aerosols": null,
+        "experiment_label": "1g ETFE wire",
+        "notes": "Normal gravity experiment"
+      },
+      {
+        "article_mla": "Osorio, A., et al. \"...\" Proceedings of the Combustion Institute ...",
+        "authors": "Osorio, A., ...",
+        "doi": "https://doi.org/...",
+        "geometry_of_sample": "wire",
+        "dimensions_of_sample": "0.50 mm copper core and 0.30 mm ETFE insulation thickness",
+        "material_of_sample": "ETFE",
+        "oxygen_concentration": "20-32%",
+        "pressure": "100 kPa",
+        "flow_velocity": "0.12 m/s",
+        "gravity_gearth": 0.0,
+        "experimental_facility": "Parabolic Aircraft",
+        "ignition_method": "Wire",
+        "ignition_power": "92 W",
+        "ignition_time": "12 s",
+        "chamber_diameter": "60 mm",
+        "ignition_extinction": null,
+        "fsr": null,
+        "hrr": null,
+        "smoke_aerosols": null,
+        "experiment_label": "microgravity ETFE wire",
+        "notes": "Microgravity experiment"
+      }
+    ]
+  }
+}
