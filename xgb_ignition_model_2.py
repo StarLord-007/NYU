@@ -1,10 +1,6 @@
 """
 xgb_ignition_model_2.py
 =======================
-
-Powerful XGBoost classifier predicting *ignition* (Yes/No) for the
-microgravity combustion database, *v2* (`database_xgb.csv`).
-
 This is the successor of ``xgb_ignition_model.py`` adapted to the updated
 ``database_xgb.csv`` file (5 208 rows vs. 3 128 in the previous version,
 roughly 2x more samples). The column schema is unchanged conceptually
