@@ -2,3 +2,4 @@ __pycache__/
 *.pyc
 artifacts/
 artifacts_v2/
+presentation/figures/
