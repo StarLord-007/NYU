@@ -1,0 +1,157 @@
+feature,importance
+rig_grouped=FLARE,0.09520057
+rig_grouped=GIFFTS,0.08288069
+rig_grouped=External-radiation wire flammability chamber,0.05308458
+ig_method_cat=Unknown,0.05006931
+rig_grouped=HOI test apparatus / 0 wind tunnel,0.029256396
+rig_grouped=0 wind tunnel / HOI test apparatus,0.024360158
+flow_direction=Quiescent,0.023043655
+material_grouped=Cellulosic tissue,0.02200915
+internal_dim_2_mm,0.016104374
+internal_dim_3_mm,0.014911193
+ignition_time_s,0.01485558
+material_family=HDPE,0.014794114
+flow_direction=Unknown,0.01357713
+material_grouped=Kimwipes,0.013508899
+sample_dim_mean_mm,0.012959708
+facility_cat=Drop Tower,0.012801755
+rig_grouped=MGLAB,0.011439752
+rig_grouped=NASA Glenn Zero Gravity Facility,0.011140023
+core_diameter_mm,0.01106682
+geometry_cat=Cylindrical,0.010767471
+material_grouped=NiCr core; ETFE outer,0.010297626
+internal_dim_1_mm,0.009939589
+facility_cat=Centrifuge,0.009846171
+sample_dim_1_mm,0.009772972
+rig_grouped=BASS-II ,0.009755477
+sample_dim_3_mm,0.008995432
+rig_grouped=NASA Glenn Research Center,0.008977209
+facility_cat=Parabolic Aircraft,0.008917041
+sample_dim_2_mm,0.008786018
+sample_dim_max_mm,0.008311587
+material_family=LDPE,0.008096082
+internal_dim_mean_mm,0.007885499
+material_family=PMMA,0.007831056
+rig_grouped=NASA White Sands Test Facility,0.0074087917
+facility_cat=Ground,0.0073193465
+oxygen_fraction,0.007288045
+core_material=Copper,0.0072821537
+pressure_kpa,0.007171273
+outer_diameter_mm,0.0071479706
+ignition_energy_j,0.006988591
+insulation_thickness_mm,0.0068142153
+rig_grouped=SJ-10 satellite,0.0066501917
+ig_method_cat=Open Flame,0.0065715746
+rig_grouped=BASS,0.0064489325
+sample_dim_min_mm,0.0064213523
+material_grouped=PEEK,0.006396355
+material_family=Kapton,0.0063604205
+material_grouped=PMMA,0.00632951
+flow_velocity_mm_s,0.0062738704
+material_grouped=Polyurethane foam fuel,0.0060237823
+rig_grouped=DIAMONDS,0.006012918
+material_grouped=Cellulosic paper (Kimwipes),0.00577724
+core_material=Stainless steel,0.0057415296
+gravity_g,0.0056908433
+flow_speed_abs_mm_s,0.0056685815
+material_family=Cellulosic,0.005621014
+material_grouped=Cu core; LDPE insulated,0.005559923
+material_grouped=Kevlar,0.0053065266
+material_grouped=P-213 tape (fiberglass with acrylic/PMMA adhesive),0.0051315087
+log10_gravity_g,0.005054005
+material_family=ETFE,0.0049905805
+sample_dim_count,0.0049798465
+ignition_power_w,0.0049141496
+flow_direction=Counterflow,0.004791048
+material_grouped=NiCr core; LDPE insulation,0.0047169095
+gravity_regime=Hyper,0.004649479
+material_family=Silicone,0.004431284
+ig_method_cat=Wire / Coil,0.004421861
+material_grouped=Cu core; LDPE outer,0.0042624664
+material_grouped=Other / Rare,0.0041751135
+material_grouped=Stainless-steel core; LDPE insulated,0.0040942715
+rig_grouped=Other / Rare,0.0040815114
+material_grouped=Silicone rubber,0.0040743575
+material_family=SIBAL,0.0040035676
+material_grouped=Cu core; ETFE outer,0.0036562004
+gravity_regime=Unknown,0.0036355346
+material_grouped=NiCr core; LDPE outer,0.0036255303
+internal_geom_cat=Unknown,0.0035502508
+geometry_cat=Wire,0.0034473548
+facility_cat=Spacecraft / ISS,0.0034254806
+gravity_regime=Partial,0.0034113978
+material_grouped=Nomex Velcro,0.003408545
+material_grouped=Polydimethylsiloxane (PDMS),0.0033255385
+material_family=Conex,0.0032958305
+"rig_grouped=Centrifuge, University of Tokyo",0.0032530283
+material_family=Kevlar,0.0032348891
+core_material=NiCr,0.003227585
+rig_grouped=Unknown,0.0030997784
+facility_cat=Unknown,0.0030781385
+gravity_regime=Microgravity,0.0030212118
+internal_geom_cat=Other,0.0028985369
+material_grouped=NOMEX,0.002880154
+material_grouped=Cotton T-shirt material (Beefy-T),0.002871095
+geometry_cat=Flat,0.002867478
+material_family=Nomex,0.0026195995
+material_family=Other,0.0025843338
+internal_geom_cat=Rectangular,0.0024792955
+material_grouped=Cotton T-Shirt Material,0.00247137
+gravity_regime=Earth,0.0024557626
+material_grouped=Kapton,0.0023814884
+flow_direction=Coflow,0.0022558086
+material_family=PPSU,0.0022338475
+material_grouped=Cu core; black LDPE outer,0.0021828252
+material_grouped=Ultem 1000,0.0021750822
+internal_geom_cat=Cylindrical,0.0021676207
+material_grouped=CONEX,0.0021577573
+material_grouped=Polycarbonate,0.0020396726
+material_grouped=P-213 Tape,0.0020325428
+material_family=Polycarbonate,0.0020034423
+material_grouped=SIBAL,0.0019585632
+material_family=PEEK,0.0019128378
+material_grouped=Whatman 44 filter paper,0.0018376759
+material_grouped=SS inner; LDPE outer,0.001578821
+material_grouped=Nomex HT90-40,0.0012314729
+rig_grouped=NASA Glenn Research Center’s Zero Gravity Research Facility,0.0010819677
+material_grouped=Mylar G,0.0010203574
+material_grouped=PPSU,0.00085914496
+material_grouped=Cu core; standard LDPE outer,0.0007752051
+geometry_cat=Chunk,0.0
+geometry_cat=Spherical,0.0
+geometry_cat=Unknown,0.0
+ig_method_cat=Radiative Heater,0.0
+facility_cat=Drop Tower + Centrifuge,0.0
+material_family=PE,0.0
+material_grouped=HDPE,0.0
+material_grouped=Extruded PMMA,0.0
+material_grouped=Cu core; LDPE insulation,0.0
+material_grouped=Cellulose acetate plastic shim stock; Fed. Spec. LP504,0.0
+material_grouped=Cellulosic paper,0.0
+material_grouped=Cellulose acetate sheet; MIL-SPEC LP-504,0.0
+material_grouped=Cellulose acetate sheet; MIL SPEC LP-504,0.0
+material_grouped=Cast PMMA,0.0
+core_material=None / NA,0.0
+facility_cat=Sounding Rocket,0.0
+material_grouped=Polymethyl methacrylate,0.0
+material_grouped=Silicone resin,0.0
+material_grouped=LDPE,0.0
+material_grouped=High-density polyethylene (HDPE),0.0
+material_grouped=Organic glass CO-120,0.0
+material_grouped=Polyphenolic open-cell foam,0.0
+material_grouped=TENGU paper; area density 0.5 mg/cm²,0.0
+rig_grouped=JAMIC,0.0
+rig_grouped=FIRE WIRE,0.0
+rig_grouped=Fire Research Device (FReD) sealed chamber,0.0
+material_grouped=glass-fiber laminate STEF,0.0
+material_grouped=polyethylene-terephthalate,0.0
+rig_grouped=BASS-II,0.0
+rig_grouped=Bremen Drop Tower µg open wind tunnel,0.0
+rig_grouped=NASA Narrow Channel Apparatus,0.0
+rig_grouped=NASA LeRC,0.0
+rig_grouped=NASA KC-135,0.0
+rig_grouped=JAMIC dropshaft,0.0
+rig_grouped=NCCRD IIT Madras combustion duct / drop tower,0.0
+rig_grouped=NASA Zero Gravity Facility,0.0
+rig_grouped=RITSI,0.0
+rig_grouped=Ploskiy kanal,0.0
