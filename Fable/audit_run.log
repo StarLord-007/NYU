@@ -1,0 +1,101 @@
+Loaded 4136 labelled rows, 85 canonical papers, 3103 ignition / 1033 no-ignition
+
+== Baseline reproduction (v2 config, latest CSV, canonical grouping) ==
+  stratified 80/20 hold-out ROC-AUC: 0.9041
+/home/ubuntu/.local/lib/python3.12/site-packages/sklearn/model_selection/_split.py:812: UserWarning: The least populated class in y has only 3 members, which is less than n_splits=5.
+  warnings.warn(
+  stratified 5-fold ROC-AUC: 0.8936 +/- 0.0099
+  GroupKFold 5-fold (canonical paper) ROC-AUC: 0.6486 +/- 0.0702
+    per fold: [0.652 0.676 0.61  0.759 0.547]
+
+== Duplicate-row inflation check ==
+  labelled rows: 5158; exact (features+label+paper) duplicates: 1022 (19.8%)
+  stratified 5-fold ROC-AUC (with duplicates): 0.9154 +/- 0.0042
+  stratified 5-fold ROC-AUC (deduplicated): 0.8936 +/- 0.0099
+
+== Grouping-contamination check on database_xgb.csv ==
+  rows: 4449, old key cardinality: 551, canonical cardinality: 88
+  GroupKFold with OLD key (551 groups): 0.7049 +/- 0.0989  folds=[0.564 0.63  0.808 0.706 0.818]
+  GroupKFold with CANONICAL key (88 groups): 0.6456 +/- 0.0989  folds=[0.579 0.747 0.784 0.557 0.561]
+  rows belonging to physical papers that the OLD key split across folds: 684 / 4449 (15.4%)
+
+== Per-paper imbalance ==
+  papers: 85
+  single-class papers: 40 (903 rows, all of them 100% ignition)
+  largest paper: 314 rows (7.6% of data); median paper: 30 rows
+  Gini coefficient of paper sizes: 0.542
+
+== Leave-One-Paper-Out decomposition (96 fits) ==
+  pooled LOPO AUC (all out-of-paper preds):      0.6505
+  between-paper component (paper-mean pred):     0.5970
+  mean within-paper AUC (53 two-class papers):   0.7473
+  median within-paper AUC:                       0.8042
+  row-weighted within-paper AUC:                 0.6909
+  papers with within-paper AUC < 0.5 (worse than random): 6/45
+  worst 10 papers by within-paper AUC:
+    AUC=0.270  n= 103 ign_rate=0.53  Rojas-Alva 2022 [.2022.112009]
+    AUC=0.311  n=  18 ign_rate=0.83  Takahashi et al 2013 [.2013.03.029]
+    AUC=0.386  n=  39 ign_rate=0.41  Feier 2002 [9(02)80211-3]
+    AUC=0.451  n=  32 ign_rate=0.75  Bolodyan 2019 [.2019.01.044]
+    AUC=0.458  n= 108 ign_rate=0.82  Olson 2009 [.2009.01.015]
+    AUC=0.478  n= 221 ign_rate=0.48  Urban ???? [ces-2025-392]
+    AUC=0.526  n=  38 ign_rate=0.68  Konno 2024 [.2024.105199]
+    AUC=0.540  n= 255 ign_rate=0.61  Ma 2025 [.2024.104329]
+    AUC=0.543  n=  58 ign_rate=0.43  Olson 2012 [/6.2012-3492]
+    AUC=0.563  n= 314 ign_rate=0.69  Konno 2023 [.2023.103989]
+
+== Out-of-distribution analysis ==
+  Spearman(novelty, within-paper AUC) = -0.172 (p=0.258) over 45 two-class papers
+  most novel papers (median robust z):
+    z=1.36  AUC=1.000  Olson 2004 [200490276773]
+    z=1.34  AUC=nan  Son 2002 [9(02)80315-7]
+    z=1.26  AUC=0.603  Olson 2024 [.2024.104267]
+    z=1.24  AUC=nan  Bolodyan 2018 [.2017.10.019]
+    z=1.19  AUC=nan  Olson 2023 [.2022.112559]
+
+== Paper-identifiability probe ==
+  5-fold accuracy predicting paper_id from features: 0.980 (chance level ~0.030, 85 classes)
+
+== Mutual information ==
+  top paper-identifying features (MI with paper id, nats; H(paper)=3.91):
+    sample_dim_mean_mm           MI(paper)=3.327 MI(target)=0.104 ratio=32.0
+    internal_dim_mean_mm         MI(paper)=2.987 MI(target)=0.079 ratio=37.6
+    sample_dim_max_mm            MI(paper)=2.972 MI(target)=0.061 ratio=49.0
+    sample_dim_1_mm              MI(paper)=2.747 MI(target)=0.056 ratio=49.2
+    internal_dim_1_mm            MI(paper)=2.713 MI(target)=0.062 ratio=43.6
+    sample_dim_2_mm              MI(paper)=2.695 MI(target)=0.076 ratio=35.6
+    sample_dim_min_mm            MI(paper)=2.571 MI(target)=0.063 ratio=41.0
+    material_grouped             MI(paper)=2.474 MI(target)=0.075 ratio=33.0
+
+== Permutation importance under grouped CV ==
+  top 10 by grouped permutation importance (delta grouped ROC-AUC):
+                       mean     std
+feature                            
+oxygen_fraction      0.1312  0.1080
+gravity_g            0.0107  0.0054
+material_family      0.0086  0.0102
+material_grouped     0.0060  0.0172
+internal_dim_3_mm    0.0056  0.0070
+flow_speed_abs_mm_s  0.0053  0.0200
+ignition_time_s      0.0047  0.0196
+flow_velocity_mm_s   0.0047  0.0127
+geometry_cat         0.0026  0.0031
+sample_dim_1_mm      0.0023  0.0150
+
+== SHAP analysis ==
+  top 10 parent features by mean |SHAP|:
+oxygen_fraction         1.3711
+flow_speed_abs_mm_s     0.4645
+ignition_time_s         0.4164
+flow_velocity_mm_s      0.4118
+material_grouped        0.3539
+sample_dim_3_mm         0.3043
+material_family         0.2651
+internal_dim_mean_mm    0.2567
+pressure_kpa            0.2234
+gravity_g               0.2185
+
+== Feature clustering ==
+  3 clusters with >1 feature (redundancy groups)
+
+Audit artifacts written to /workspace/Fable/audit_outputs
