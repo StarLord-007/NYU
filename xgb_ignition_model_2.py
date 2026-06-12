@@ -462,7 +462,7 @@ def _group_rare(series, min_count=8, label="Other / Rare"):
 # identical to v1; only the in-file ordering of Facility/Ignition method
 # was swapped, which is irrelevant because we look columns up by name.
 COLS = {
-    "article": "Article (MLA)",
+    "article": "Article",
     "doi": "DOI",
     "geometry": "Geometry of Sample (flat, wire, or Cylindrical)",
     "dimensions": (
@@ -475,7 +475,7 @@ COLS = {
     "flow": "Flow Velocity (Co flow is + and counter flow is -)",
     "rig": "Rig Name",
     "internal_geom": "Internal geometry (Cylindrical , rectangular)",
-    "internal_dims": "Internal Dimensions ",
+    "internal_dims": "Internal Dimensions",
     "gravity": "Gravity (g/gearth)",
     "ig_method": "Ignition method (Wire, open flame, or Radiative Heater",
     "facility": (
@@ -500,6 +500,7 @@ POST_IGNITION_LEAKS = [
 def load_clean(data_path: Path) -> pd.DataFrame:
     """Load the v2 CSV (skipping the section-banner row) and build clean features."""
     raw = pd.read_csv(data_path, skiprows=1)
+    raw.columns = [c.strip() if isinstance(c, str) else c for c in raw.columns]
 
     # Drop trailing unnamed columns and any leakage columns that exist.
     drop = [c for c in raw.columns if c.startswith("Unnamed")] + [
@@ -568,9 +569,6 @@ def load_clean(data_path: Path) -> pd.DataFrame:
     df["material_grouped"] = _group_rare(
         raw[COLS["material"]].fillna("Unknown").astype(str), min_count=10
     )
-    df["rig_grouped"] = _group_rare(
-        raw[COLS["rig"]].fillna("Unknown").astype(str), min_count=8
-    )
 
     # Source identifier for group-wise CV
     df["source_group"] = raw[COLS["doi"]].fillna(raw[COLS["article"]]).astype(str)
@@ -620,7 +618,6 @@ CATEGORICAL_FEATURES = [
     "flow_direction",
     "gravity_regime",
     "material_grouped",
-    "rig_grouped",
 ]
 
 

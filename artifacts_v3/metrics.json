@@ -1,0 +1,18 @@
+{
+  "data_file": "database_xgb.csv",
+  "n_rows_clean": 4449,
+  "class_balance": {
+    "ignition": 3303,
+    "no_ignition": 1146
+  },
+  "scale_pos_weight": 0.3469573115349682,
+  "holdout_roc_auc": 0.8962469197788185,
+  "holdout_pr_auc": 0.9626833422092393,
+  "holdout_best_f1": 0.8891966759002771,
+  "holdout_best_threshold": 0.13262344896793365,
+  "holdout_f1_default_thr": 0.8631578947368421,
+  "stratified_5fold_roc_auc_mean": 0.9029105685170002,
+  "stratified_5fold_roc_auc_std": 0.004358125849584166,
+  "groupkfold_5fold_roc_auc_mean": 0.6712487683517646,
+  "groupkfold_5fold_roc_auc_std": 0.0984272668156471
+}

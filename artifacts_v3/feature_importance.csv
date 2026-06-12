@@ -1,0 +1,127 @@
+feature,importance
+material_grouped=Cellulosic paper (Kimwipes),0.053057004
+material_grouped=Kimwipes,0.036468755
+ignition_time_s,0.02738407
+flow_direction=Unknown,0.02445101
+facility_cat=Spacecraft / ISS,0.024289379
+core_diameter_mm,0.02382922
+internal_dim_3_mm,0.023424553
+material_grouped=Cast PMMA,0.023189541
+material_grouped=Polyphenolic open-cell foam,0.022930194
+material_grouped=NiCr core; ETFE outer,0.022859344
+sample_dim_mean_mm,0.022531752
+sample_dim_count,0.021270515
+internal_dim_2_mm,0.02075406
+flow_direction=Quiescent,0.017939817
+internal_dim_1_mm,0.017566072
+geometry_cat=Cylindrical,0.016243322
+outer_diameter_mm,0.01622069
+geometry_cat=Flat,0.015759943
+sample_dim_max_mm,0.014858965
+material_grouped=Other / Rare,0.014758034
+sample_dim_1_mm,0.0141422525
+internal_geom_cat=Cylindrical,0.013965067
+internal_geom_cat=Unknown,0.013441886
+gravity_regime=Hyper,0.013126018
+core_material=Copper,0.013060008
+pressure_kpa,0.012783601
+flow_direction=Coflow,0.012757764
+material_family=PMMA,0.012716346
+oxygen_fraction,0.012027679
+insulation_thickness_mm,0.011734193
+internal_dim_mean_mm,0.011544081
+flow_speed_abs_mm_s,0.01125866
+material_family=Cellulosic,0.01078372
+sample_dim_2_mm,0.010615829
+ignition_energy_j,0.010594689
+ignition_power_w,0.0105367
+log10_gravity_g,0.010472234
+flow_direction=Counterflow,0.010280958
+material_grouped=Kapton,0.0102366805
+material_family=LDPE,0.009983357
+material_grouped=Kevlar,0.009799027
+core_material=Stainless steel,0.00976949
+facility_cat=Ground,0.009705212
+flow_velocity_mm_s,0.009412945
+gravity_regime=Microgravity,0.009087529
+sample_dim_3_mm,0.009065558
+sample_dim_min_mm,0.008832409
+gravity_g,0.008653068
+ig_method_cat=Wire / Coil,0.007981506
+material_grouped=Cu core; LDPE outer,0.0077475975
+ig_method_cat=Open Flame,0.0076810815
+material_family=ETFE,0.00765465
+material_grouped=Polydimethylsiloxane (PDMS),0.00726543
+material_family=Kevlar,0.006966189
+gravity_regime=Partial,0.0067915395
+gravity_regime=Earth,0.006683379
+facility_cat=Drop Tower,0.0065406812
+material_grouped=Stainless-steel core; LDPE insulated,0.006477614
+material_grouped=NiCr core; LDPE outer,0.0061562825
+material_grouped=Polyurethane foam fuel,0.0061033033
+material_grouped=NiCr core; LDPE insulation,0.005948914
+facility_cat=Parabolic Aircraft,0.0059348135
+material_family=Kapton,0.0058149076
+material_family=Other,0.0056688096
+core_material=NiCr,0.0056410516
+material_grouped=Cu core; LDPE insulated,0.005455898
+material_family=Nomex,0.0053695757
+internal_geom_cat=Rectangular,0.0049292417
+material_family=Silicone,0.0048297117
+material_grouped=SIBAL,0.0048203347
+material_grouped=PPSU,0.0047825547
+material_grouped=CONEX,0.004748339
+material_grouped=Mylar G,0.004619795
+material_grouped=Nomex Velcro,0.004556742
+material_grouped=PMMA,0.0044743977
+material_family=SIBAL,0.0044482504
+material_grouped=NOMEX,0.0043452154
+material_grouped=Silicone rubber,0.0040603755
+material_grouped=Ultem 1000,0.0039509204
+material_grouped=Cu core; ETFE outer,0.0039345725
+material_grouped=Cotton T-Shirt Material,0.0037313232
+material_family=PEEK,0.0037147072
+material_grouped=Whatman 44 filter paper,0.0035148829
+material_grouped=Cotton T-shirt material (Beefy-T),0.003501215
+material_grouped=P-213 Tape,0.0034252119
+internal_geom_cat=Other,0.0031528482
+material_family=Conex,0.0030402578
+geometry_cat=Wire,0.0030202111
+material_family=PPSU,0.002910016
+material_grouped=P-213 tape (fiberglass with acrylic/PMMA adhesive),0.00290514
+material_grouped=PEEK,0.0028441418
+material_grouped=Polycarbonate,0.002776381
+material_grouped=Cu core; black LDPE outer,0.002694605
+material_family=Polycarbonate,0.0026263737
+material_grouped=Nomex HT90-40,0.0023999985
+material_grouped=Cu core; standard LDPE outer,0.0011858245
+facility_cat=Drop Tower + Centrifuge,0.0
+material_family=HDPE,0.0
+material_family=PE,0.0
+facility_cat=Sounding Rocket,0.0
+ig_method_cat=Unknown,0.0
+ig_method_cat=Radiative Heater,0.0
+geometry_cat=Unknown,0.0
+geometry_cat=Chunk,0.0
+geometry_cat=Spherical,0.0
+facility_cat=Centrifuge,0.0
+facility_cat=Unknown,0.0
+core_material=None / NA,0.0
+material_grouped=Cellulose acetate plastic shim stock; Fed. Spec. LP504,0.0
+gravity_regime=Unknown,0.0
+material_grouped=High-density polyethylene (HDPE),0.0
+material_grouped=HDPE,0.0
+material_grouped=Extruded PMMA,0.0
+material_grouped=Cu core; LDPE insulation,0.0
+material_grouped=Cellulose acetate sheet; MIL-SPEC LP-504,0.0
+material_grouped=Cellulosic tissue,0.0
+material_grouped=Cellulosic paper,0.0
+material_grouped=Cellulose acetate sheet; MIL SPEC LP-504,0.0
+material_grouped=Organic glass CO-120,0.0
+material_grouped=LDPE,0.0
+material_grouped=SS inner; LDPE outer,0.0
+material_grouped=Polymethyl methacrylate,0.0
+material_grouped=TENGU paper; area density 0.5 mg/cm²,0.0
+material_grouped=Silicone resin,0.0
+material_grouped=glass-fiber laminate STEF,0.0
+material_grouped=polyethylene-terephthalate,0.0
