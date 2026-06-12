@@ -189,11 +189,11 @@ deduplicated data; `eval_outputs/protocol_comparison.csv`):
 
 | Protocol | What it estimates | ROC-AUC |
 |---|---|---|
-| random stratified 80/20 | within-campaign interpolation | ~0.90 |
-| stratified 5-fold | same, averaged | 0.894 |
-| GroupKFold(5), canonical papers | unseen-campaign, one partition | 0.649 |
-| StratifiedGroupKFold(5) × 3 seeds | unseen-campaign, partition-averaged | ~0.65 |
-| Leave-One-Paper-Out (pooled) | unseen-campaign, maximal training data | 0.651 |
+| random stratified 80/20 (×5 seeds) | within-campaign interpolation | 0.893 ± 0.006 |
+| stratified 5-fold | same, averaged | 0.894 ± 0.010 |
+| GroupKFold(5), canonical papers | unseen-campaign, one partition | 0.647 ± 0.076 |
+| StratifiedGroupKFold(5) × 3 seeds | unseen-campaign, partition-averaged | 0.647 ± 0.055 |
+| Leave-One-Paper-Out (pooled) | unseen-campaign, maximal training data | 0.655 |
 
 **Recommended protocol for publication:**
 
@@ -237,3 +237,31 @@ ranked interventions in `README.md`. Summary of what was built:
   z-scoring O₂/pressure within a paper destroys the absolute physical scales
   (LOC thresholds) that are the model's only transferable signal — it would
   trade real physics for cosmetic domain invariance.
+
+### 6.1 Headline benchmark result (read before the table)
+
+Across 18 configurations evaluated on identical StratifiedGroupKFold
+partitions (5 folds × 3 seeds, nested threshold selection), **no intervention
+changes pooled unseen-paper ROC-AUC beyond fold noise**: all methods sit in
+0.626–0.650 with fold-σ ≈ 0.05–0.07, and no paired per-fold Wilcoxon test
+against the baseline reaches significance (best ΔAUC +0.003, focal γ=2,
+p=0.39; best ΔMCC +0.029, paper-bagging, p=0.08; full table:
+`eval_outputs/paired_vs_baseline.csv`). The same holds for LOPO (baseline
+pooled 0.655 vs 0.649 for the most heavily constrained config).
+
+This is the central empirical finding of the project: **the unseen-paper
+ceiling of this dataset is set by between-paper concept/label shift —
+information that is absent from the features — not by the loss function,
+weighting, hyperparameters, or feature pruning.** The honest performance
+claim for publication is grouped ROC-AUC ≈ 0.65 (pooled) with median
+within-paper AUC ≈ 0.80, and the path to improving it is data curation
+(§5 of `PAPER_IMBALANCE_ANALYSIS.md`, §"What would actually help" of
+`AUGMENTATION_ASSESSMENT.md`), not further model engineering.
+
+A second operationally important finding: **decision thresholds do not
+transfer across papers.** The MCC-optimal threshold selected on inner
+validation folds ranges from 0.39 to 0.997 across the 15 outer folds (and the
+F1-optimal threshold collapses to ≈0.01 because predicting "ignition"
+everywhere nearly maximises F1 at 75% prevalence). Any deployment of this
+model must either recalibrate per campaign or report probabilities, not hard
+labels — a single global threshold is indefensible.

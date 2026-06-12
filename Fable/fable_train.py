@@ -33,11 +33,9 @@ Differences vs ``xgb_ignition_model_2.py``
    * ``--paper-bagging N`` fits an ensemble over cluster (paper-level)
      bootstrap resamples, the standard bootstrap for clustered data.
 
-Run (final recommended configuration)::
+Run (final recommended configuration = the defaults)::
 
-    python Fable/fable_train.py --data Microgravity_Database_Latest.csv \
-        --paper-weight sqrt --class-weight balanced --feature-set physics \
-        --monotone-o2
+    python Fable/fable_train.py --data Microgravity_Database_Latest.csv
 
 Group-aware hyperparameter search::
 
@@ -437,7 +435,13 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--data", default="Microgravity_Database_Latest.csv")
     ap.add_argument("--out", default=str(Path(__file__).resolve().parent / "model_outputs"))
-    ap.add_argument("--feature-set", choices=["all", "physics"], default="physics")
+    # Defaults = the recommended configuration from the benchmark
+    # (eval_outputs/comparison_table.md): combined 1/sqrt(N_paper) x class
+    # weighting with group-tuned hyperparameters. No benchmarked
+    # configuration separates from any other beyond fold noise on unseen
+    # papers, so the default is chosen for statistical defensibility
+    # (cluster-aware weighting, group-aware tuning), not for a metric win.
+    ap.add_argument("--feature-set", choices=["all", "physics"], default="all")
     ap.add_argument(
         "--paper-weight",
         choices=["none", "inverse", "sqrt", "effective", "log"],
@@ -446,8 +450,7 @@ def main() -> None:
     ap.add_argument("--class-weight", choices=["none", "balanced", "spw"], default="balanced")
     ap.add_argument("--objective", choices=["logistic", "focal"], default="logistic")
     ap.add_argument("--focal-gamma", type=float, default=2.0)
-    ap.add_argument("--monotone-o2", action="store_true", default=True)
-    ap.add_argument("--no-monotone-o2", dest="monotone_o2", action="store_false")
+    ap.add_argument("--monotone-o2", action="store_true", default=False)
     ap.add_argument("--paper-bagging", type=int, default=0)
     ap.add_argument(
         "--params",

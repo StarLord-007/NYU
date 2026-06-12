@@ -282,6 +282,37 @@ def to_markdown_table(summary: pd.DataFrame) -> str:
     return "\n".join(lines)
 
 
+def paired_analysis(folds: pd.DataFrame, baseline: str, out_dir: Path) -> pd.DataFrame:
+    """Paired per-fold comparison of every method against the baseline.
+
+    All methods are evaluated on identical (seed, fold) partitions, so paired
+    differences remove the (large, +/-0.05-0.07) partition variance and give
+    the honest answer to "does method X beat the baseline on unseen papers?".
+    Wilcoxon signed-rank test over the 15 paired folds.
+    """
+    from scipy.stats import wilcoxon
+
+    base = folds[folds["method"] == baseline].set_index(["seed", "fold"])
+    rows = []
+    for name, sub in folds.groupby("method"):
+        if name == baseline:
+            continue
+        sub = sub.set_index(["seed", "fold"])
+        common = base.index.intersection(sub.index)
+        rec = {"method": name, "n_folds": len(common)}
+        for metric in ["roc_auc", "pr_auc", "mcc", "balanced_accuracy"]:
+            d = (sub.loc[common, metric] - base.loc[common, metric]).to_numpy()
+            rec[f"delta_{metric}"] = float(np.mean(d))
+            try:
+                rec[f"wilcoxon_p_{metric}"] = float(wilcoxon(d).pvalue) if np.any(d != 0) else 1.0
+            except ValueError:
+                rec[f"wilcoxon_p_{metric}"] = np.nan
+        rows.append(rec)
+    res = pd.DataFrame(rows).sort_values("delta_roc_auc", ascending=False)
+    res.to_csv(out_dir / "paired_vs_baseline.csv", index=False)
+    return res
+
+
 # ---------------------------------------------------------------------------
 # Validation-protocol comparison (audit question 3)
 # ---------------------------------------------------------------------------
@@ -464,6 +495,9 @@ def main() -> None:
     args = ap.parse_args()
 
     out_dir = Path(args.out)
+    if args.quick:
+        # never clobber the full benchmark artifacts with a smoke test
+        out_dir = out_dir.with_name(out_dir.name + "_quick")
     out_dir.mkdir(parents=True, exist_ok=True)
 
     df = load_clean(args.data)
@@ -494,6 +528,13 @@ def main() -> None:
     md = to_markdown_table(summary)
     (out_dir / "comparison_table.md").write_text(md + "\n")
     print("\n" + md + "\n")
+
+    base_name = "baseline (spw, v2 config)"
+    if base_name in folds["method"].unique() and folds["method"].nunique() > 1:
+        paired = paired_analysis(folds, base_name, out_dir)
+        print("Paired per-fold deltas vs baseline (Wilcoxon over identical folds):")
+        cols = ["method", "delta_roc_auc", "wilcoxon_p_roc_auc", "delta_mcc", "delta_balanced_accuracy"]
+        print(paired[cols].round(4).to_string(index=False))
 
     prot = None
     if not args.skip_protocols:

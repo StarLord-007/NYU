@@ -352,7 +352,7 @@ def lopo_decomposition(df: pd.DataFrame, out_dir: Path, out: dict) -> pd.DataFra
     papers = df["paper_id"].to_numpy()
     spw = (y == 0).sum() / max((y == 1).sum(), 1)
 
-    print("== Leave-One-Paper-Out decomposition (96 fits) ==")
+    print(f"== Leave-One-Paper-Out decomposition ({pd.unique(papers).size} fits) ==")
     rows = []
     oof = np.full(len(df), np.nan)
     for pid in pd.unique(papers):
