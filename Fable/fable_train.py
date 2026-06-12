@@ -142,19 +142,24 @@ DEFAULT_PARAMS = dict(
     gamma=0.0,
 )
 
-# Result of the group-aware random search (see --tune / GROUP_TUNED note in
-# the audit report). Shallower, slower, heavily regularised relative to the
-# random-split optimum — exactly what cross-paper transfer favours.
+# Winner of the group-aware random search (60 candidates scored by
+# StratifiedGroupKFold(5) held-out-paper ROC-AUC; full history in
+# model_outputs/group_search_history.csv). NOTE: the search showed *low*
+# sensitivity — the top-10 configurations sit within one fold-std of each
+# other (0.636-0.646) — i.e. hyperparameters are not the binding constraint
+# on cross-paper transfer; domain shift is. We keep the winner anyway:
+# moderately smaller capacity (400 x depth-5, subsample 0.7, lambda 2) than
+# the random-split optimum.
 GROUP_TUNED_PARAMS = dict(
     n_estimators=400,
-    learning_rate=0.02,
-    max_depth=3,
-    min_child_weight=10.0,
+    learning_rate=0.05,
+    max_depth=5,
+    min_child_weight=4.0,
     subsample=0.7,
-    colsample_bytree=0.5,
-    reg_lambda=5.0,
-    reg_alpha=1.0,
-    gamma=0.5,
+    colsample_bytree=0.8,
+    reg_lambda=2.0,
+    reg_alpha=0.0,
+    gamma=0.0,
 )
 
 

@@ -1,0 +1,72 @@
+Loaded 4136 rows / 85 canonical papers (3103 ignition, 1033 no-ignition)
+
+[1/18] baseline (spw, v2 config) ...
+    group ROC-AUC = 0.6469 +/- 0.0567 | MCC = 0.140
+[2/18] class-only (balanced) ...
+    group ROC-AUC = 0.6439 +/- 0.0562 | MCC = 0.151
+[3/18] paper 1/N ...
+    group ROC-AUC = 0.6428 +/- 0.0498 | MCC = 0.153
+[4/18] paper 1/sqrt(N) ...
+    group ROC-AUC = 0.6448 +/- 0.0494 | MCC = 0.143
+[5/18] paper effective-number ...
+    group ROC-AUC = 0.6404 +/- 0.0477 | MCC = 0.135
+[6/18] paper 1/(1+lnN) ...
+    group ROC-AUC = 0.6403 +/- 0.0517 | MCC = 0.123
+[7/18] combined 1/N x class ...
+    group ROC-AUC = 0.6482 +/- 0.0512 | MCC = 0.148
+[8/18] combined 1/sqrt(N) x class ...
+    group ROC-AUC = 0.6441 +/- 0.0548 | MCC = 0.148
+[9/18] focal g=1 ...
+    group ROC-AUC = 0.6503 +/- 0.0554 | MCC = 0.152
+[10/18] focal g=2 ...
+    group ROC-AUC = 0.6503 +/- 0.0542 | MCC = 0.161
+[11/18] focal g=2 + paper sqrt ...
+    group ROC-AUC = 0.6423 +/- 0.0587 | MCC = 0.135
+[12/18] group-tuned HP ...
+    group ROC-AUC = 0.6370 +/- 0.0527 | MCC = 0.140
+[13/18] group-tuned HP + combined w ...
+    group ROC-AUC = 0.6380 +/- 0.0543 | MCC = 0.138
+[14/18] physics features ...
+    group ROC-AUC = 0.6312 +/- 0.0641 | MCC = 0.139
+[15/18] physics + combined w ...
+    group ROC-AUC = 0.6290 +/- 0.0695 | MCC = 0.138
+[16/18] physics + combined w + group HP ...
+    group ROC-AUC = 0.6262 +/- 0.0628 | MCC = 0.135
+[17/18] fable (= above + monotone O2) ...
+    group ROC-AUC = 0.6328 +/- 0.0651 | MCC = 0.130
+[18/18] fable + paper-bagging 25 ...
+    group ROC-AUC = 0.6397 +/- 0.0609 | MCC = 0.169
+
+| Method | Group ROC-AUC | PR-AUC | MCC | Balanced Accuracy |
+|---|---|---|---|---|
+| focal g=1 | 0.650 +/- 0.055 | 0.842 +/- 0.031 | 0.152 +/- 0.090 | 0.588 +/- 0.044 |
+| focal g=2 | 0.650 +/- 0.054 | 0.843 +/- 0.032 | 0.161 +/- 0.080 | 0.587 +/- 0.046 |
+| combined 1/N x class | 0.648 +/- 0.051 | 0.841 +/- 0.028 | 0.148 +/- 0.088 | 0.588 +/- 0.049 |
+| baseline (spw, v2 config) | 0.647 +/- 0.057 | 0.842 +/- 0.032 | 0.140 +/- 0.088 | 0.582 +/- 0.055 |
+| paper 1/sqrt(N) | 0.645 +/- 0.049 | 0.840 +/- 0.027 | 0.143 +/- 0.085 | 0.588 +/- 0.049 |
+| combined 1/sqrt(N) x class | 0.644 +/- 0.055 | 0.839 +/- 0.031 | 0.148 +/- 0.081 | 0.592 +/- 0.055 |
+| class-only (balanced) | 0.644 +/- 0.056 | 0.835 +/- 0.036 | 0.151 +/- 0.087 | 0.597 +/- 0.057 |
+| paper 1/N | 0.643 +/- 0.050 | 0.836 +/- 0.028 | 0.153 +/- 0.078 | 0.582 +/- 0.047 |
+| focal g=2 + paper sqrt | 0.642 +/- 0.059 | 0.836 +/- 0.034 | 0.135 +/- 0.083 | 0.591 +/- 0.046 |
+| paper effective-number | 0.640 +/- 0.048 | 0.837 +/- 0.025 | 0.135 +/- 0.081 | 0.581 +/- 0.048 |
+| paper 1/(1+lnN) | 0.640 +/- 0.052 | 0.839 +/- 0.030 | 0.123 +/- 0.075 | 0.576 +/- 0.042 |
+| fable + paper-bagging 25 | 0.640 +/- 0.061 | 0.839 +/- 0.036 | 0.169 +/- 0.101 | 0.576 +/- 0.042 |
+| group-tuned HP + combined w | 0.638 +/- 0.054 | 0.835 +/- 0.031 | 0.138 +/- 0.079 | 0.574 +/- 0.046 |
+| group-tuned HP | 0.637 +/- 0.053 | 0.835 +/- 0.033 | 0.140 +/- 0.078 | 0.586 +/- 0.048 |
+| fable (= above + monotone O2) | 0.633 +/- 0.065 | 0.837 +/- 0.037 | 0.130 +/- 0.097 | 0.572 +/- 0.050 |
+| physics features | 0.631 +/- 0.064 | 0.833 +/- 0.043 | 0.139 +/- 0.071 | 0.580 +/- 0.036 |
+| physics + combined w | 0.629 +/- 0.070 | 0.832 +/- 0.042 | 0.138 +/- 0.095 | 0.572 +/- 0.046 |
+| physics + combined w + group HP | 0.626 +/- 0.063 | 0.831 +/- 0.037 | 0.135 +/- 0.077 | 0.574 +/- 0.039 |
+
+Protocol comparison (baseline config) ...
+                        protocol  roc_auc_mean  roc_auc_std
+random stratified 80/20 hold-out        0.8932       0.0064
+            stratified 5-fold CV        0.8936       0.0099
+          GroupKFold(5) by paper        0.6469       0.0756
+StratifiedGroupKFold(5) x3 seeds        0.6469       0.0548
+    Leave-One-Paper-Out (pooled)        0.6551          NaN
+
+LOPO head-to-head: baseline vs fable ...
+  papers improved: 16/45 | mean within-paper AUC 0.745 -> 0.740
+
+Done. Outputs in /workspace/Fable/eval_outputs
