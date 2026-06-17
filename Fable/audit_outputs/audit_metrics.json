@@ -1,0 +1,39 @@
+{
+  "n_rows": 4136,
+  "n_papers": 85,
+  "class_balance": {
+    "ignition": 3103,
+    "no_ignition": 1033
+  },
+  "holdout_roc_auc": 0.9040934444211066,
+  "stratified_cv_mean": 0.893588005947737,
+  "stratified_cv_std": 0.00993941627059885,
+  "group_cv_canonical_mean": 0.648604427799258,
+  "group_cv_canonical_std": 0.0702397245598998,
+  "group_cv_canonical_folds": [
+    0.6516470199405089,
+    0.6756635508520074,
+    0.6096120347320017,
+    0.7588011549780665,
+    0.547298378493706
+  ],
+  "n_rows_with_duplicates": 5158,
+  "n_duplicate_rows_removed": 1022,
+  "stratified_cv_with_duplicates": 0.9154254788126558,
+  "stratified_cv_deduplicated": 0.893588005947737,
+  "old_file_group_cv_old_key_mean": 0.7048769752932846,
+  "old_file_group_cv_old_key_std": 0.09890496428016593,
+  "old_file_group_cv_canonical_mean": 0.6456052340824847,
+  "old_file_group_cv_canonical_std": 0.09886440471895927,
+  "old_key_rows_in_split_papers": 684,
+  "lopo_pooled_auc": 0.6505132434370884,
+  "lopo_within_paper_auc_mean": 0.7472548184098058,
+  "lopo_within_paper_auc_median": 0.8041666666666667,
+  "lopo_within_paper_auc_weighted": 0.6908546160722545,
+  "lopo_papers_below_05": 6,
+  "lopo_papers_below_06": 11,
+  "lopo_n_two_class_papers": 45,
+  "lopo_between_paper_auc": 0.5969534525966971,
+  "paper_probe_accuracy_mean": 0.9801733756257704,
+  "paper_probe_chance": 0.03047649267272503
+}

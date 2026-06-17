@@ -1,0 +1,72 @@
+[1/5] Loading Microgravity_Database_Latest.csv ...
+  4136 rows, 85 canonical papers, 3103 ignition / 1033 no-ignition
+[2/5] Configuration: all pw=sqrt cw=balanced
+[3/5] Group-aware random search (60 candidates) ...
+  [  1/60] group ROC-AUC = 0.6263  <-- new best
+  [  2/60] group ROC-AUC = 0.6184
+  [  3/60] group ROC-AUC = 0.6325  <-- new best
+  [  4/60] group ROC-AUC = 0.6370  <-- new best
+  [  5/60] group ROC-AUC = 0.6394  <-- new best
+  [  6/60] group ROC-AUC = 0.6315
+  [  7/60] group ROC-AUC = 0.6085
+  [  8/60] group ROC-AUC = 0.6253
+  [  9/60] group ROC-AUC = 0.6116
+  [ 10/60] group ROC-AUC = 0.6180
+  [ 11/60] group ROC-AUC = 0.6268
+  [ 12/60] group ROC-AUC = 0.6029
+  [ 13/60] group ROC-AUC = 0.6255
+  [ 14/60] group ROC-AUC = 0.5842
+  [ 15/60] group ROC-AUC = 0.6153
+  [ 16/60] group ROC-AUC = 0.6126
+  [ 17/60] group ROC-AUC = 0.6221
+  [ 18/60] group ROC-AUC = 0.6221
+  [ 19/60] group ROC-AUC = 0.6258
+  [ 20/60] group ROC-AUC = 0.6137
+  [ 21/60] group ROC-AUC = 0.6262
+  [ 22/60] group ROC-AUC = 0.6395  <-- new best
+  [ 23/60] group ROC-AUC = 0.6204
+  [ 24/60] group ROC-AUC = 0.6199
+  [ 25/60] group ROC-AUC = 0.6070
+  [ 26/60] group ROC-AUC = 0.6406  <-- new best
+  [ 27/60] group ROC-AUC = 0.6459  <-- new best
+  [ 28/60] group ROC-AUC = 0.6071
+  [ 29/60] group ROC-AUC = 0.6036
+  [ 30/60] group ROC-AUC = 0.6037
+  [ 31/60] group ROC-AUC = 0.5983
+  [ 32/60] group ROC-AUC = 0.6087
+  [ 33/60] group ROC-AUC = 0.5988
+  [ 34/60] group ROC-AUC = 0.6021
+  [ 35/60] group ROC-AUC = 0.6141
+  [ 36/60] group ROC-AUC = 0.6364
+  [ 37/60] group ROC-AUC = 0.6295
+  [ 38/60] group ROC-AUC = 0.6390
+  [ 39/60] group ROC-AUC = 0.6357
+  [ 40/60] group ROC-AUC = 0.6125
+  [ 41/60] group ROC-AUC = 0.6277
+  [ 42/60] group ROC-AUC = 0.6191
+  [ 43/60] group ROC-AUC = 0.6016
+  [ 44/60] group ROC-AUC = 0.6267
+  [ 45/60] group ROC-AUC = 0.6079
+  [ 46/60] group ROC-AUC = 0.6210
+  [ 47/60] group ROC-AUC = 0.6355
+  [ 48/60] group ROC-AUC = 0.6053
+  [ 49/60] group ROC-AUC = 0.6193
+  [ 50/60] group ROC-AUC = 0.6154
+  [ 51/60] group ROC-AUC = 0.6413
+  [ 52/60] group ROC-AUC = 0.6281
+  [ 53/60] group ROC-AUC = 0.6246
+  [ 54/60] group ROC-AUC = 0.6020
+  [ 55/60] group ROC-AUC = 0.6017
+  [ 56/60] group ROC-AUC = 0.5959
+  [ 57/60] group ROC-AUC = 0.6231
+  [ 58/60] group ROC-AUC = 0.6373
+  [ 59/60] group ROC-AUC = 0.6234
+  [ 60/60] group ROC-AUC = 0.6088
+  best held-out-paper ROC-AUC: 0.6459
+  best params: {'n_estimators': 400, 'max_depth': 5, 'learning_rate': 0.05, 'min_child_weight': 4, 'subsample': 0.7, 'colsample_bytree': 0.8, 'gamma': 0.0, 'reg_lambda': 2.0, 'reg_alpha': 0.0}
+[4/5] Validation-fold threshold optimisation (held-out papers, no test leakage) ...
+  OOF grouped ROC-AUC: 0.6534
+  thresholds: {'mcc': 0.872, 'f1': 0.092, 'balanced_accuracy': 0.895, 'youden_j': 0.895}
+[5/5] Fitting final model on all data and saving ...
+  written: Fable/model_outputs/fable_model.joblib
+  written: Fable/model_outputs/fable_model_card.json
