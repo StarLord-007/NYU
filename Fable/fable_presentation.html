@@ -90,101 +90,132 @@
 </div>
 
 <!-- ═══════════════════════════════════════════════ -->
-<!-- SLIDE 2: AUDIT — Data Quality Findings -->
+<!-- SLIDE 2: AUDIT — C1-C10 CRITICISMS -->
 <!-- ═══════════════════════════════════════════════ -->
 <div class="slide" data-slide="2">
     <div class="gradient-mesh">
         <div class="blob" style="width:380px;height:380px;top:-90px;right:-80px;background:#f59e0b;opacity:0.09;"></div>
         <div class="blob" style="width:260px;height:260px;bottom:-60px;left:-40px;background:#4f8ef7;opacity:0.07;"></div>
+        <div class="blob" style="width:200px;height:200px;top:42%;left:16%;background:#a78bfa;opacity:0.06;"></div>
     </div>
     <div class="content">
         <div class="reveal" style="margin-bottom:0.5rem;">
             <span class="part-badge" style="background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.3);color:#f59e0b;">Part 1 — Audit</span>
         </div>
-        <h2 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(1.7rem,3.5vw,2.5rem);margin-bottom:0.3rem;font-weight:400;">Data Quality Findings</h2>
-        <p class="reveal" style="color:#6b7a99;font-size:0.9rem;margin-bottom:1.4rem;">Six issues identified in the source CSV, ordered by severity</p>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
-            <div class="reveal" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-left:3px solid #ef4444;border-radius:10px;padding:14px 16px;">
-                <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;color:#ef4444;text-transform:uppercase;margin-bottom:5px;">F1 · Critical</div>
-                <div style="font-weight:600;font-size:0.88rem;margin-bottom:4px;">Corrupted DOI Column</div>
-                <div style="font-size:0.78rem;color:#b8c4d8;line-height:1.4;">Konno paper: 243 distinct DOIs via Excel autofill → 551 fake "papers" instead of 88. Inflated reported 0.678.</div>
+        <h2 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(1.7rem,3.5vw,2.5rem);margin-bottom:0.3rem;font-weight:400;">Ten Criticisms to Keep</h2>
+        <p class="reveal" style="color:#6b7a99;font-size:0.9rem;margin-bottom:1.1rem;">The deck now centers the model, leakage, and validation criticisms: C1–C10.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+            <div>
+                <div class="reveal" style="font-size:0.71rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#ef4444;margin-bottom:7px;">Feature &amp; preprocessing channels</div>
+                <div class="reveal" style="background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.2);border-radius:9px;padding:10px 12px;margin-bottom:6px;">
+                    <div style="font-weight:700;font-size:0.8rem;color:#ef4444;">C1 · material_grouped is a paper alias</div>
+                    <div style="font-size:0.72rem;color:#b8c4d8;line-height:1.35;margin-top:2px;">Free-text lab spellings fingerprint papers: MI(paper)=2.47 nats, grouped permutation ≈ 0.</div>
+                </div>
+                <div class="reveal" style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.18);border-radius:9px;padding:10px 12px;margin-bottom:6px;">
+                    <div style="font-weight:700;font-size:0.8rem;color:#ef4444;">C2 · Apparatus descriptors masquerade as physics</div>
+                    <div style="font-size:0.72rem;color:#b8c4d8;line-height:1.35;margin-top:2px;">Chamber dimensions, facility, igniter protocol, and parse counts mostly identify rigs.</div>
+                </div>
+                <div class="reveal" style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.18);border-radius:9px;padding:10px 12px;margin-bottom:6px;">
+                    <div style="font-weight:700;font-size:0.8rem;color:#f59e0b;">C3 · Redundant features amplify fingerprints</div>
+                    <div style="font-size:0.72rem;color:#b8c4d8;line-height:1.35;margin-top:2px;">Dimension copies and gravity/log-gravity let column subsampling keep a barcode in every tree.</div>
+                </div>
+                <div class="reveal" style="background:rgba(79,142,247,0.06);border:1px solid rgba(79,142,247,0.18);border-radius:9px;padding:10px 12px;margin-bottom:6px;">
+                    <div style="font-weight:700;font-size:0.8rem;color:#4f8ef7;">C4 · parse_core_outer misses edge patterns</div>
+                    <div style="font-size:0.72rem;color:#b8c4d8;line-height:1.35;margin-top:2px;">Patterns like "Ø0.5/0.8 mm" reduce coverage; minor, but visible in parsing audit.</div>
+                </div>
+                <div class="reveal" style="background:rgba(79,142,247,0.06);border:1px solid rgba(79,142,247,0.18);border-radius:9px;padding:10px 12px;">
+                    <div style="font-weight:700;font-size:0.8rem;color:#4f8ef7;">C5 · Duplicate handling is split-sensitive</div>
+                    <div style="font-size:0.72rem;color:#b8c4d8;line-height:1.35;margin-top:2px;">Deduplication after group attachment leaves alias duplicates and random CV contamination.</div>
+                </div>
             </div>
-            <div class="reveal" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-left:3px solid #ef4444;border-radius:10px;padding:14px 16px;">
-                <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;color:#ef4444;text-transform:uppercase;margin-bottom:5px;">F2 · Critical</div>
-                <div style="font-weight:600;font-size:0.88rem;margin-bottom:4px;">Citation Aliases</div>
-                <div style="font-size:0.78rem;color:#b8c4d8;line-height:1.4;">6 papers appear under 2 citation strings each. Raw A+B+C key → 97 groups; canonical → 85 physical papers.</div>
-            </div>
-            <div class="reveal" style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-left:3px solid #f59e0b;border-radius:10px;padding:14px 16px;">
-                <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;color:#f59e0b;text-transform:uppercase;margin-bottom:5px;">F3 · Major</div>
-                <div style="font-weight:600;font-size:0.88rem;margin-bottom:4px;">Exact Duplicate Rows</div>
-                <div style="font-size:0.78rem;color:#b8c4d8;line-height:1.4;">1,022 / 5,158 rows (19.8%) are exact duplicates. AUC with dupes: 0.915 → honest: 0.894. Pure contamination.</div>
-            </div>
-            <div class="reveal" style="background:rgba(79,142,247,0.07);border:1px solid rgba(79,142,247,0.18);border-left:3px solid #4f8ef7;border-radius:10px;padding:14px 16px;">
-                <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;color:#4f8ef7;text-transform:uppercase;margin-bottom:5px;">F4 · Moderate</div>
-                <div style="font-weight:600;font-size:0.88rem;margin-bottom:4px;">Mixed Encodings &amp; Units</div>
-                <div style="font-size:0.78rem;color:#b8c4d8;line-height:1.4;">cp1252 encoding (v2 crashes). O₂ as "21%" and 0.21; pressure in kPa/atm/psia/MPa; gravity in g and 1e-05.</div>
-            </div>
-            <div class="reveal" style="background:rgba(107,122,153,0.1);border:1px solid rgba(107,122,153,0.2);border-left:3px solid #6b7a99;border-radius:10px;padding:14px 16px;">
-                <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;color:#94a3b8;text-transform:uppercase;margin-bottom:5px;">F5 · Structural</div>
-                <div style="font-weight:600;font-size:0.88rem;margin-bottom:4px;">Label Heterogeneity</div>
-                <div style="font-size:0.78rem;color:#b8c4d8;line-height:1.4;">"Ignition" aggregates different definitions (flash vs. spread vs. self-extinguishing). Unfixable in code.</div>
-            </div>
-            <div class="reveal" style="background:rgba(107,122,153,0.1);border:1px solid rgba(107,122,153,0.2);border-left:3px solid #6b7a99;border-radius:10px;padding:14px 16px;">
-                <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;color:#94a3b8;text-transform:uppercase;margin-bottom:5px;">F6 · Info</div>
-                <div style="font-weight:600;font-size:0.88rem;margin-bottom:4px;">Unlabelled &amp; Single-Class</div>
-                <div style="font-size:0.78rem;color:#b8c4d8;line-height:1.4;">56 unlabelled rows dropped. 40 papers (903 rows) are 100% ignition — no within-paper AUC defined.</div>
+            <div>
+                <div class="reveal" style="font-size:0.71rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#f59e0b;margin-bottom:7px;">Validation &amp; training protocol</div>
+                <div class="reveal" style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.18);border-radius:9px;padding:10px 12px;margin-bottom:6px;">
+                    <div style="font-weight:700;font-size:0.8rem;color:#f59e0b;">C6 · Quoted scores come from random splits</div>
+                    <div style="font-size:0.72rem;color:#b8c4d8;line-height:1.35;margin-top:2px;">Random splits measure campaign recall, not generalisation to unseen papers.</div>
+                </div>
+                <div class="reveal" style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.18);border-radius:9px;padding:10px 12px;margin-bottom:6px;">
+                    <div style="font-weight:700;font-size:0.8rem;color:#f59e0b;">C7 · HP search optimises the wrong objective</div>
+                    <div style="font-size:0.72rem;color:#b8c4d8;line-height:1.35;margin-top:2px;">StratifiedKFold tuning selects memorisation capacity; group-aware search was not used for selection.</div>
+                </div>
+                <div class="reveal" style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.18);border-radius:9px;padding:10px 12px;margin-bottom:6px;">
+                    <div style="font-weight:700;font-size:0.8rem;color:#ef4444;">C8 · Threshold tuned on the test set</div>
+                    <div style="font-size:0.72rem;color:#b8c4d8;line-height:1.35;margin-top:2px;">best_f1_threshold(y_test, proba_test) leaks test labels into the reported F1.</div>
+                </div>
+                <div class="reveal" style="background:rgba(79,142,247,0.06);border:1px solid rgba(79,142,247,0.18);border-radius:9px;padding:10px 12px;margin-bottom:6px;">
+                    <div style="font-weight:700;font-size:0.8rem;color:#4f8ef7;">C9 · GroupKFold is unshuffled and unstratified</div>
+                    <div style="font-size:0.72rem;color:#b8c4d8;line-height:1.35;margin-top:2px;">One deterministic partition gives unstable fold ratios with 85 papers and σ ≈ 0.07.</div>
+                </div>
+                <div class="reveal" style="background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.18);border-radius:9px;padding:10px 12px;">
+                    <div style="font-weight:700;font-size:0.8rem;color:#a78bfa;">C10 · scale_pos_weight conflates imbalances</div>
+                    <div style="font-size:0.72rem;color:#b8c4d8;line-height:1.35;margin-top:2px;">The 76/24 row skew is partly paper composition; one global class weight treats it as intrinsic.</div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <!-- ═══════════════════════════════════════════════ -->
-<!-- SLIDE 3: AUDIT — Feature Leakage & Model Flaws -->
+<!-- SLIDE 3: AUDIT — RANDOM FOREST PROBE + TABLES -->
 <!-- ═══════════════════════════════════════════════ -->
 <div class="slide" data-slide="3">
     <div class="gradient-mesh">
         <div class="blob" style="width:360px;height:360px;top:-80px;left:-80px;background:#ef4444;opacity:0.08;"></div>
-        <div class="blob" style="width:240px;height:240px;bottom:-50px;right:-40px;background:#a78bfa;opacity:0.07;"></div>
+        <div class="blob" style="width:260px;height:260px;bottom:-50px;right:-40px;background:#a78bfa;opacity:0.07;"></div>
+        <div class="blob" style="width:220px;height:220px;top:40%;right:20%;background:#4f8ef7;opacity:0.05;"></div>
     </div>
     <div class="content">
         <div class="reveal" style="margin-bottom:0.5rem;">
-            <span class="part-badge" style="background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.3);color:#f59e0b;">Part 1 — Audit</span>
+            <span class="part-badge" style="background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.3);color:#f59e0b;">Part 1 — Leakage</span>
         </div>
-        <h2 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(1.7rem,3.5vw,2.5rem);margin-bottom:0.3rem;font-weight:400;">Feature Leakage &amp; Modelling Flaws</h2>
-        <p class="reveal" style="color:#6b7a99;font-size:0.9rem;margin-bottom:1.2rem;">Three layers of leakage + four split/training criticisms</p>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <h2 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(1.7rem,3.5vw,2.5rem);margin-bottom:0.3rem;font-weight:400;">The Paper Fingerprint Is Measurable</h2>
+        <p class="reveal" style="color:#6b7a99;font-size:0.9rem;margin-bottom:1rem;">The same input features can identify the source paper before predicting ignition.</p>
+        <div style="display:grid;grid-template-columns:0.82fr 1.18fr;gap:14px;align-items:stretch;">
             <div>
-                <div class="reveal" style="font-size:0.72rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#ef4444;margin-bottom:8px;">⚠ Feature Leakage (3 layers)</div>
-                <div class="reveal" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px;margin-bottom:8px;">
-                    <span style="font-weight:600;font-size:0.85rem;">C1 — material_grouped is a paper alias</span>
-                    <p style="font-size:0.78rem;color:#b8c4d8;margin:4px 0 0 0;line-height:1.4;">MI with paper = 2.47 nats. Lab-specific spellings create a categorical fingerprint. Grouped perm. importance ≈ 0.</p>
+                <div class="reveal" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.24);border-radius:14px;padding:18px;margin-bottom:10px;text-align:center;">
+                    <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#ef4444;margin-bottom:7px;">Random Forest paper probe</div>
+                    <div style="font-size:3rem;font-weight:700;color:#ef4444;line-height:1;" class="danger-glow">98.0%</div>
+                    <div style="font-size:0.78rem;color:#b8c4d8;line-height:1.45;margin-top:8px;">5-fold CV accuracy at predicting one of 85 papers from model inputs alone.</div>
+                    <div style="display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap;">
+                        <span style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:14px;padding:4px 10px;font-size:0.72rem;color:#6b7a99;">chance ≈ 3%</span>
+                        <span style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:14px;padding:4px 10px;font-size:0.72rem;color:#6b7a99;">n = 4,136</span>
+                    </div>
                 </div>
-                <div class="reveal" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px;margin-bottom:8px;">
-                    <span style="font-weight:600;font-size:0.85rem;">C2 — Apparatus descriptors fed as physics</span>
-                    <p style="font-size:0.78rem;color:#b8c4d8;margin:4px 0 0 0;line-height:1.4;">Chamber size, facility_cat, igniter protocol → rig fingerprints. sample_dim_count: target MI=0.000, paper MI=1.01.</p>
-                </div>
-                <div class="reveal" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px;">
-                    <span style="font-weight:600;font-size:0.85rem;">C3 — Redundant features amplify fingerprints</span>
-                    <p style="font-size:0.78rem;color:#b8c4d8;margin:4px 0 0 0;line-height:1.4;">{dim_1, _2, _max, _mean} and {gravity_g, log10_gravity_g} near-duplicates. Column subsampling guarantees a copy survives per tree.</p>
+                <div class="reveal" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:13px 15px;">
+                    <div style="font-weight:600;font-size:0.86rem;margin-bottom:4px;color:#f0f4ff;">Finding</div>
+                    <div style="font-size:0.78rem;color:#b8c4d8;line-height:1.45;">A flexible learner can first infer the campaign, then exploit paper base rates. That shortcut is profitable in random splits and fails on unseen papers.</div>
                 </div>
             </div>
-            <div>
-                <div class="reveal" style="font-size:0.72rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#f59e0b;margin-bottom:8px;">⚠ Split &amp; Training Flaws</div>
-                <div class="reveal" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:11px 14px;margin-bottom:7px;">
-                    <span style="font-weight:600;font-size:0.84rem;">C6 — All quoted scores use random splits</span>
-                    <p style="font-size:0.77rem;color:#b8c4d8;margin:3px 0 0 0;line-height:1.35;">98% paper identifiability → random splits measure campaign recall, not generalisation.</p>
+            <div style="display:grid;grid-template-rows:auto auto;gap:10px;">
+                <div class="reveal" style="background:rgba(255,255,255,0.035);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:12px 14px;">
+                    <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#4f8ef7;margin-bottom:7px;">Mutual information table — top fingerprint carriers</div>
+                    <table style="width:100%;border-collapse:collapse;font-size:0.72rem;">
+                        <thead style="color:#6b7a99;text-align:left;">
+                            <tr><th style="padding:0 6px 5px 0;">Feature</th><th style="padding:0 6px 5px 0;">MI target</th><th style="padding:0 6px 5px 0;">MI paper</th><th style="padding:0 0 5px 0;">paper:target</th></tr>
+                        </thead>
+                        <tbody style="color:#b8c4d8;">
+                            <tr><td style="padding:3px 6px 3px 0;color:#f0f4ff;">sample_dim_mean_mm</td><td>0.104</td><td style="color:#ef4444;font-weight:600;">3.33</td><td>32×</td></tr>
+                            <tr><td style="padding:3px 6px 3px 0;color:#f0f4ff;">internal_dim_mean_mm</td><td>0.079</td><td style="color:#ef4444;font-weight:600;">2.99</td><td>38×</td></tr>
+                            <tr><td style="padding:3px 6px 3px 0;color:#f0f4ff;">material_grouped</td><td>0.075</td><td style="color:#f59e0b;font-weight:600;">2.47</td><td>33×</td></tr>
+                            <tr><td style="padding:3px 6px 3px 0;color:#f0f4ff;">flow_velocity_mm_s</td><td>0.037</td><td style="color:#f59e0b;font-weight:600;">1.98</td><td>54×</td></tr>
+                            <tr><td style="padding:3px 6px 3px 0;color:#f0f4ff;">oxygen_fraction</td><td>0.051</td><td style="color:#4f8ef7;font-weight:600;">1.53</td><td>30×</td></tr>
+                        </tbody>
+                    </table>
                 </div>
-                <div class="reveal" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:11px 14px;margin-bottom:7px;">
-                    <span style="font-weight:600;font-size:0.84rem;">C7 — HP search optimises the wrong objective</span>
-                    <p style="font-size:0.77rem;color:#b8c4d8;margin:3px 0 0 0;line-height:1.35;">StratifiedKFold scoring → selects for memorisation capacity. Group-aware search was only a post-hoc diagnostic.</p>
-                </div>
-                <div class="reveal" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:11px 14px;margin-bottom:7px;">
-                    <span style="font-weight:600;font-size:0.84rem;">C8 — Threshold tuned on the test set</span>
-                    <p style="font-size:0.77rem;color:#b8c4d8;margin:3px 0 0 0;line-height:1.35;">best_f1_threshold(y_test, proba_test) → direct leakage. Reported F1=0.891 is inflated.</p>
-                </div>
-                <div class="reveal" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:11px 14px;">
-                    <span style="font-weight:600;font-size:0.84rem;">C10 — scale_pos_weight conflates two imbalances</span>
-                    <p style="font-size:0.77rem;color:#b8c4d8;margin:3px 0 0 0;line-height:1.35;">76/24 class skew is partly a paper-composition artefact. One global weight treats it as a class property.</p>
+                <div class="reveal" style="background:rgba(255,255,255,0.035);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:12px 14px;">
+                    <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#34d399;margin-bottom:7px;">Grouped permutation table — honest transfer signal</div>
+                    <table style="width:100%;border-collapse:collapse;font-size:0.72rem;">
+                        <thead style="color:#6b7a99;text-align:left;">
+                            <tr><th style="padding:0 6px 5px 0;">Feature</th><th style="padding:0 6px 5px 0;">Δ grouped AUC</th><th style="padding:0 0 5px 0;">Readout</th></tr>
+                        </thead>
+                        <tbody style="color:#b8c4d8;">
+                            <tr><td style="padding:3px 6px 3px 0;color:#f0f4ff;">oxygen_fraction</td><td style="color:#34d399;font-weight:600;">+0.131</td><td>genuine physics</td></tr>
+                            <tr><td style="padding:3px 6px 3px 0;color:#f0f4ff;">gravity_g</td><td style="color:#4f8ef7;font-weight:600;">+0.011</td><td>small transfer</td></tr>
+                            <tr><td style="padding:3px 6px 3px 0;color:#f0f4ff;">material_family</td><td style="color:#4f8ef7;font-weight:600;">+0.009</td><td>chemistry signal</td></tr>
+                            <tr><td style="padding:3px 6px 3px 0;color:#f0f4ff;">material_grouped</td><td style="color:#6b7a99;font-weight:600;">+0.006</td><td>mostly fingerprint</td></tr>
+                            <tr><td style="padding:3px 6px 3px 0;color:#f0f4ff;">ignition_time_s</td><td style="color:#6b7a99;font-weight:600;">+0.005</td><td>protocol barcode</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -348,51 +379,77 @@
 </div>
 
 <!-- ═══════════════════════════════════════════════ -->
-<!-- SLIDE 6: EVALS — LOPO Per-Paper Analysis -->
+<!-- SLIDE 6: LEAKAGE — SHAP FIGURE + SIGNATURE -->
 <!-- ═══════════════════════════════════════════════ -->
 <div class="slide" data-slide="6">
     <div class="gradient-mesh">
         <div class="blob" style="width:360px;height:360px;top:-80px;right:-70px;background:#34d399;opacity:0.09;"></div>
         <div class="blob" style="width:250px;height:250px;bottom:-50px;left:-40px;background:#4f8ef7;opacity:0.07;"></div>
+        <div class="blob" style="width:220px;height:220px;top:42%;left:44%;background:#ef4444;opacity:0.05;"></div>
     </div>
     <div class="content">
         <div class="reveal" style="margin-bottom:0.5rem;">
-            <span class="part-badge" style="background:rgba(52,211,153,0.12);border-color:rgba(52,211,153,0.3);color:#34d399;">Part 2 — Evals</span>
+            <span class="part-badge" style="background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.3);color:#f59e0b;">Part 1 — Leakage</span>
         </div>
-        <h2 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(1.7rem,3.5vw,2.5rem);margin-bottom:0.3rem;font-weight:400;">Leave-One-Paper-Out Deep Dive</h2>
-        <p class="reveal" style="color:#6b7a99;font-size:0.9rem;margin-bottom:1.2rem;">LOPO reveals per-paper AUC variance and isolates concept-shift failures</p>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
-            <div class="reveal" style="background:rgba(79,142,247,0.08);border:1px solid rgba(79,142,247,0.2);border-radius:12px;padding:16px;">
-                <div style="font-size:2rem;font-weight:700;color:#4f8ef7;" class="stat-glow">0.655</div>
-                <div style="font-size:0.8rem;color:#b8c4d8;margin-top:4px;line-height:1.4;">LOPO pooled AUC<br><span style="color:#6b7a99;font-size:0.73rem;">Baseline config · all 85 papers</span></div>
-            </div>
-            <div class="reveal" style="background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.2);border-radius:12px;padding:16px;">
-                <div style="font-size:2rem;font-weight:700;color:#34d399;" class="green-glow">0.80</div>
-                <div style="font-size:0.8rem;color:#b8c4d8;margin-top:4px;line-height:1.4;">Median within-paper AUC<br><span style="color:#6b7a99;font-size:0.73rem;">Model ranks conditions well inside known campaigns</span></div>
-            </div>
-            <div class="reveal" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:12px;padding:16px;">
-                <div style="font-size:2rem;font-weight:700;color:#ef4444;" class="danger-glow">40 / 85</div>
-                <div style="font-size:0.8rem;color:#b8c4d8;margin-top:4px;line-height:1.4;">Single-class papers<br><span style="color:#6b7a99;font-size:0.73rem;">No within-paper AUC defined (all-ignition)</span></div>
-            </div>
-            <div class="reveal" style="grid-column:1/-1;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:14px 16px;">
-                <div style="font-size:0.73rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#6b7a99;margin-bottom:8px;">Worst-performing papers (concept/label shift examples)</div>
-                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
-                    <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:7px;padding:9px 12px;">
-                        <div style="font-weight:600;font-size:0.82rem;color:#ef4444;">AUC 0.27</div>
-                        <div style="font-size:0.75rem;color:#b8c4d8;margin-top:2px;">Rojas-Alva 2022 — transferred rules inverted by different physical regime</div>
+        <h2 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(1.7rem,3.5vw,2.5rem);margin-bottom:0.3rem;font-weight:400;">SHAP Says the Model Uses the Fingerprint</h2>
+        <p class="reveal" style="color:#6b7a99;font-size:0.9rem;margin-bottom:1rem;">High SHAP plus near-zero grouped permutation is the operational leakage signature.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;">
+            <div class="reveal" style="background:rgba(255,255,255,0.035);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:13px 15px;">
+                <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#a78bfa;margin-bottom:10px;">SHAP figure — baseline mean |SHAP|</div>
+                <div style="display:grid;gap:7px;">
+                    <div>
+                        <div style="display:flex;justify-content:space-between;font-size:0.72rem;margin-bottom:2px;"><span style="color:#f0f4ff;">oxygen_fraction</span><span style="color:#34d399;">1.37</span></div>
+                        <div style="height:9px;background:rgba(255,255,255,0.07);border-radius:5px;overflow:hidden;"><div class="bar-fill" data-width="100" style="width:0%;background:linear-gradient(90deg,#34d399,#4f8ef7);"></div></div>
                     </div>
-                    <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:7px;padding:9px 12px;">
-                        <div style="font-weight:600;font-size:0.82rem;color:#ef4444;">AUC 0.46</div>
-                        <div style="font-size:0.75rem;color:#b8c4d8;margin-top:2px;">Olson 2009 — probes different physical limits, inverts learned rules</div>
+                    <div>
+                        <div style="display:flex;justify-content:space-between;font-size:0.72rem;margin-bottom:2px;"><span style="color:#b8c4d8;">flow_speed_abs_mm_s</span><span style="color:#f59e0b;">0.46</span></div>
+                        <div style="height:9px;background:rgba(255,255,255,0.07);border-radius:5px;overflow:hidden;"><div class="bar-fill" data-width="34" style="width:0%;background:linear-gradient(90deg,#f59e0b,#ef4444);"></div></div>
                     </div>
-                    <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);border-radius:7px;padding:9px 12px;">
-                        <div style="font-weight:600;font-size:0.82rem;color:#f59e0b;">AUC 0.48</div>
-                        <div style="font-size:0.75rem;color:#b8c4d8;margin-top:2px;">Urban lunar-g 2025 — novel gravity regime, no analogous training data</div>
+                    <div>
+                        <div style="display:flex;justify-content:space-between;font-size:0.72rem;margin-bottom:2px;"><span style="color:#b8c4d8;">ignition_time_s</span><span style="color:#f59e0b;">0.42</span></div>
+                        <div style="height:9px;background:rgba(255,255,255,0.07);border-radius:5px;overflow:hidden;"><div class="bar-fill" data-width="30" style="width:0%;background:linear-gradient(90deg,#f59e0b,#ef4444);"></div></div>
+                    </div>
+                    <div>
+                        <div style="display:flex;justify-content:space-between;font-size:0.72rem;margin-bottom:2px;"><span style="color:#b8c4d8;">flow_velocity_mm_s</span><span style="color:#f59e0b;">0.41</span></div>
+                        <div style="height:9px;background:rgba(255,255,255,0.07);border-radius:5px;overflow:hidden;"><div class="bar-fill" data-width="30" style="width:0%;background:linear-gradient(90deg,#f59e0b,#ef4444);"></div></div>
+                    </div>
+                    <div>
+                        <div style="display:flex;justify-content:space-between;font-size:0.72rem;margin-bottom:2px;"><span style="color:#b8c4d8;">material_grouped</span><span style="color:#ef4444;">0.35</span></div>
+                        <div style="height:9px;background:rgba(255,255,255,0.07);border-radius:5px;overflow:hidden;"><div class="bar-fill" data-width="26" style="width:0%;background:linear-gradient(90deg,#ef4444,#a78bfa);"></div></div>
+                    </div>
+                    <div>
+                        <div style="display:flex;justify-content:space-between;font-size:0.72rem;margin-bottom:2px;"><span style="color:#b8c4d8;">sample_dim_3_mm</span><span style="color:#ef4444;">0.30</span></div>
+                        <div style="height:9px;background:rgba(255,255,255,0.07);border-radius:5px;overflow:hidden;"><div class="bar-fill" data-width="22" style="width:0%;background:linear-gradient(90deg,#ef4444,#a78bfa);"></div></div>
+                    </div>
+                    <div>
+                        <div style="display:flex;justify-content:space-between;font-size:0.72rem;margin-bottom:2px;"><span style="color:#b8c4d8;">internal_dim_mean_mm</span><span style="color:#ef4444;">0.26</span></div>
+                        <div style="height:9px;background:rgba(255,255,255,0.07);border-radius:5px;overflow:hidden;"><div class="bar-fill" data-width="19" style="width:0%;background:linear-gradient(90deg,#ef4444,#a78bfa);"></div></div>
+                    </div>
+                    <div>
+                        <div style="display:flex;justify-content:space-between;font-size:0.72rem;margin-bottom:2px;"><span style="color:#b8c4d8;">gravity_g</span><span style="color:#4f8ef7;">0.22</span></div>
+                        <div style="height:9px;background:rgba(255,255,255,0.07);border-radius:5px;overflow:hidden;"><div class="bar-fill" data-width="16" style="width:0%;background:linear-gradient(90deg,#4f8ef7,#a78bfa);"></div></div>
                     </div>
                 </div>
+                <div style="font-size:0.7rem;color:#6b7a99;margin-top:9px;font-style:italic;">Green/blue = transferable physics; amber/red = high attribution that largely vanishes under grouped permutation.</div>
             </div>
-            <div class="reveal" style="grid-column:1/-1;background:rgba(79,142,247,0.06);border:1px solid rgba(79,142,247,0.15);border-radius:10px;padding:12px 16px;">
-                <div style="font-size:0.8rem;color:#b8c4d8;line-height:1.5;"><span style="color:#f0f4ff;font-weight:600;">Key finding:</span> ρ = −0.17 (p=0.26) between feature-space novelty and per-paper failure. Concept shift is the cause — not covariate shift. Model degradation cannot be detected in advance from input distributions alone.</div>
+            <div class="reveal" style="background:rgba(255,255,255,0.035);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:13px 15px;">
+                <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#ef4444;margin-bottom:9px;">Leakage signature table</div>
+                <table style="width:100%;border-collapse:collapse;font-size:0.71rem;">
+                    <thead style="color:#6b7a99;text-align:left;">
+                        <tr><th style="padding:0 6px 5px 0;">Feature</th><th style="padding:0 6px 5px 0;">SHAP rank</th><th style="padding:0 6px 5px 0;">Grouped perm.</th><th style="padding:0 0 5px 0;">Diagnosis</th></tr>
+                    </thead>
+                    <tbody style="color:#b8c4d8;line-height:1.35;">
+                        <tr><td style="padding:4px 6px 4px 0;color:#f0f4ff;">oxygen_fraction</td><td>1</td><td style="color:#34d399;font-weight:600;">+0.131</td><td>genuine LOC physics</td></tr>
+                        <tr><td style="padding:4px 6px 4px 0;color:#f0f4ff;">ignition_time_s</td><td>3</td><td style="color:#6b7a99;font-weight:600;">≈0 (+0.005)</td><td>campaign protocol</td></tr>
+                        <tr><td style="padding:4px 6px 4px 0;color:#f0f4ff;">material_grouped</td><td>5</td><td style="color:#6b7a99;font-weight:600;">≈0 (+0.006)</td><td>free-text paper alias</td></tr>
+                        <tr><td style="padding:4px 6px 4px 0;color:#f0f4ff;">sample_dim_3_mm</td><td>6</td><td style="color:#6b7a99;font-weight:600;">≈0 (+0.002)</td><td>specimen barcode</td></tr>
+                        <tr><td style="padding:4px 6px 4px 0;color:#f0f4ff;">internal_dim_mean_mm</td><td>7</td><td style="color:#6b7a99;font-weight:600;">≈0</td><td>chamber barcode</td></tr>
+                        <tr><td style="padding:4px 6px 4px 0;color:#f0f4ff;">gravity_g</td><td>10</td><td style="color:#4f8ef7;font-weight:600;">+0.011</td><td>genuine, small</td></tr>
+                    </tbody>
+                </table>
+                <div style="background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.18);border-radius:10px;padding:11px 13px;margin-top:11px;">
+                    <div style="font-size:0.78rem;color:#b8c4d8;line-height:1.45;"><span style="color:#f0f4ff;font-weight:600;">Interpretation:</span> the baseline spends substantial attribution mass on features that help inside known campaigns but do not improve unseen-paper AUC.</div>
+                </div>
             </div>
         </div>
     </div>
@@ -498,7 +555,7 @@
                 </div>
                 <div class="reveal" style="background:rgba(52,211,153,0.07);border:1px solid rgba(52,211,153,0.16);border-radius:9px;padding:11px 13px;margin-bottom:7px;">
                     <div style="font-weight:600;font-size:0.83rem;margin-bottom:3px;">Harmonise label definitions across papers</div>
-                    <div style="font-size:0.77rem;color:#b8c4d8;line-height:1.4;">Separate "sustained spread" from "flash" from "self-extinguishing". Label shift (F5) is the main unfixable residual — address it in data, not model.</div>
+                    <div style="font-size:0.77rem;color:#b8c4d8;line-height:1.4;">Separate "sustained spread" from "flash" from "self-extinguishing". Label shift is the main unfixable residual — address it in data, not model.</div>
                 </div>
                 <div class="reveal" style="background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.16);border-radius:9px;padding:11px 13px;">
                     <div style="font-weight:600;font-size:0.83rem;margin-bottom:3px;">Deploy probabilities, not hard labels</div>
@@ -563,24 +620,40 @@
 </div>
 
 <!-- ═══════════════════════════════════════════════ -->
-<!-- SLIDE 10: OUTRO -->
+<!-- SLIDE 10: SOBER CLOSE -->
 <!-- ═══════════════════════════════════════════════ -->
 <div class="slide" data-slide="10">
     <div class="gradient-mesh">
-        <div class="blob" style="width:500px;height:500px;top:-120px;right:-100px;background:#4f8ef7;opacity:0.14;"></div>
-        <div class="blob" style="width:350px;height:350px;bottom:-80px;left:-60px;background:#a78bfa;opacity:0.11;"></div>
-        <div class="blob" style="width:220px;height:220px;top:40%;left:18%;background:#34d399;opacity:0.09;"></div>
+        <div class="blob" style="width:460px;height:460px;top:-120px;right:-100px;background:#4f8ef7;opacity:0.09;"></div>
+        <div class="blob" style="width:320px;height:320px;bottom:-80px;left:-60px;background:#a78bfa;opacity:0.08;"></div>
+        <div class="blob" style="width:220px;height:220px;top:42%;left:18%;background:#34d399;opacity:0.06;"></div>
     </div>
-    <canvas class="particle-canvas" style="position:absolute;inset:0;z-index:1;"></canvas>
-    <div class="content text-center">
-        <div style="font-size:80px;margin-bottom:1rem;animation:float 3.5s ease-in-out infinite;" class="reveal">🚀</div>
-        <h2 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(2rem,4.5vw,3.5rem);font-weight:400;background:linear-gradient(135deg,#4f8ef7,#a78bfa,#34d399);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;margin-bottom:0.8rem;">Fable — Audit &amp; Eval Complete</h2>
-        <p class="reveal" style="color:#6b7a99;font-size:0.95rem;margin-bottom:1.6rem;letter-spacing:0.08em;">The path forward is data curation, not model engineering</p>
-        <div style="display:flex;justify-content:center;gap:14px;flex-wrap:wrap;" class="reveal">
-            <div style="background:rgba(79,142,247,0.1);border:1px solid rgba(79,142,247,0.25);border-radius:20px;padding:6px 18px;font-size:0.78rem;color:#4f8ef7;font-weight:500;">Grouped AUC ≈ 0.65</div>
-            <div style="background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.25);border-radius:20px;padding:6px 18px;font-size:0.78rem;color:#34d399;font-weight:500;">Within-paper AUC ≈ 0.80</div>
-            <div style="background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.25);border-radius:20px;padding:6px 18px;font-size:0.78rem;color:#a78bfa;font-weight:500;">18 Interventions Tested</div>
-            <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);border-radius:20px;padding:6px 18px;font-size:0.78rem;color:#f59e0b;font-weight:500;">github.com/StarLord-007/NYU</div>
+    <canvas class="particle-canvas-ambient" style="position:absolute;inset:0;z-index:1;"></canvas>
+    <div class="content">
+        <div class="reveal" style="margin-bottom:0.5rem;">
+            <span class="part-badge" style="background:rgba(107,122,153,0.12);border-color:rgba(107,122,153,0.28);color:#b8c4d8;">Close</span>
+        </div>
+        <h2 class="reveal" style="font-family:'Instrument Serif',serif;font-size:clamp(2rem,4.2vw,3.3rem);font-weight:400;line-height:1.15;margin-bottom:0.8rem;color:#f0f4ff;">What the model can honestly support</h2>
+        <p class="reveal" style="color:#b8c4d8;font-size:clamp(0.9rem,1.4vw,1.05rem);line-height:1.6;max-width:850px;margin-bottom:1.3rem;">This is not a failed model story. It is a measurement story: the current corpus supports within-campaign ranking, but it does not yet support a strong claim of calibrated transfer across independent papers.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px;">
+            <div class="reveal" style="background:rgba(79,142,247,0.07);border:1px solid rgba(79,142,247,0.18);border-radius:12px;padding:15px 16px;">
+                <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#4f8ef7;margin-bottom:6px;">Report</div>
+                <div style="font-size:0.86rem;color:#f0f4ff;font-weight:600;margin-bottom:4px;">Grouped AUC ≈ 0.65</div>
+                <div style="font-size:0.76rem;color:#b8c4d8;line-height:1.45;">Use it as the primary unseen-paper claim, not the random-split upper bound.</div>
+            </div>
+            <div class="reveal" style="background:rgba(52,211,153,0.07);border:1px solid rgba(52,211,153,0.18);border-radius:12px;padding:15px 16px;">
+                <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#34d399;margin-bottom:6px;">Preserve</div>
+                <div style="font-size:0.86rem;color:#f0f4ff;font-weight:600;margin-bottom:4px;">Within-paper ranking ≈ 0.80</div>
+                <div style="font-size:0.76rem;color:#b8c4d8;line-height:1.45;">The useful signal is local ordering inside campaigns, especially oxygen-driven LOC behavior.</div>
+            </div>
+            <div class="reveal" style="background:rgba(167,139,250,0.07);border:1px solid rgba(167,139,250,0.18);border-radius:12px;padding:15px 16px;">
+                <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#a78bfa;margin-bottom:6px;">Improve</div>
+                <div style="font-size:0.86rem;color:#f0f4ff;font-weight:600;margin-bottom:4px;">Add independent evidence</div>
+                <div style="font-size:0.76rem;color:#b8c4d8;line-height:1.45;">More papers, harmonised labels, uncertainties, and thermophysical descriptors are the next bottleneck.</div>
+            </div>
+        </div>
+        <div class="reveal" style="background:rgba(255,255,255,0.035);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px 18px;">
+            <div style="font-size:0.82rem;color:#b8c4d8;line-height:1.55;"><span style="color:#f0f4ff;font-weight:600;">Bottom line:</span> keep the grouped protocol, close the obvious fingerprint channels, and make the remaining limitation explicit. The model is informative when the claim matches what the data can identify.</div>
         </div>
     </div>
 </div>
