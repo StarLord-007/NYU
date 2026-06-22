@@ -114,6 +114,11 @@ import joblib
 # A single global seed reused everywhere for reproducibility.
 RANDOM_STATE = 42
 
+# Directory that contains this script. Used to make the default input/output
+# paths independent of the current working directory, so the script runs the
+# same way whether launched from the repository root or from its own folder.
+SCRIPT_DIR = Path(__file__).resolve().parent
+
 # Silence a few noisy-but-harmless warnings (e.g. undefined R2 on tiny papers,
 # MAPE on near-zero targets). We handle those cases explicitly ourselves.
 warnings.filterwarnings("ignore", category=RuntimeWarning)
@@ -174,6 +179,26 @@ def _print_header(title: str) -> None:
     print("\n" + line)
     print(title)
     print(line)
+
+
+def locate_data_file(user_path: str) -> Path:
+    """Resolve the database path robustly, independent of the cwd.
+
+    Search order: (1) the path exactly as given, (2) the same filename next to
+    this script, (3) the same filename in the script's parent directories (the
+    repository root). This lets the script live inside the ``FSR Regression``
+    folder while the workbook sits at the project root.
+    """
+    given = Path(user_path)
+    if given.exists():
+        return given
+    name = given.name
+    candidates = [SCRIPT_DIR / name]
+    candidates += [parent / name for parent in SCRIPT_DIR.parents]
+    for cand in candidates:
+        if cand.exists():
+            return cand
+    return given  # return the original so the caller can emit a clear error
 
 
 # =============================================================================
@@ -821,9 +846,11 @@ def main() -> None:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument("--data", default="Microgravity_Database.xlsm",
-                        help="Path to the Excel database.")
-    parser.add_argument("--out", default="results",
-                        help="Output directory for all artefacts.")
+                        help="Path to the Excel database (auto-located if not "
+                             "found in the current directory).")
+    parser.add_argument("--out", default=str(SCRIPT_DIR / "results"),
+                        help="Output directory for all artefacts "
+                             "(defaults to a 'results' folder next to this script).")
     parser.add_argument("--n-iter", type=int, default=40,
                         help="RandomizedSearchCV iterations per model.")
     parser.add_argument("--cv-splits", type=int, default=5,
@@ -841,7 +868,7 @@ def main() -> None:
 
     # ------------------------------------------------------------------ load
     _print_header("STEP 1  |  LOAD DATABASE")
-    data_path = Path(args.data)
+    data_path = locate_data_file(args.data)
     if not data_path.exists():
         sys.exit(f"ERROR: data file not found: {data_path.resolve()}")
     df_raw = load_database(data_path)
