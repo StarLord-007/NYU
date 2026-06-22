@@ -1,0 +1,15 @@
+# Core dependencies for the microgravity ignition ML pipeline
+# (root modeling scripts + Fable/ re-analysis + presentation generation).
+#
+# These are required to run the modeling, evaluation, audit, and presentation
+# scripts against the committed CSV datasets. No external services or API keys
+# are needed for this path.
+numpy
+pandas
+scipy
+scikit-learn
+xgboost
+joblib
+matplotlib
+shap
+python-pptx

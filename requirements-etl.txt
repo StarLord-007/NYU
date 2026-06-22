@@ -1,0 +1,13 @@
+# OPTIONAL heavy dependencies for the PDF -> data extraction (ETL) stage
+# under First-Try/. These are only needed when re-building the dataset from
+# raw PDFs (data/raw_pdfs/). They are large and the LLM extraction step also
+# requires an API key (GROQ_API_KEY / OPENAI_API_KEY for a Groq/OpenAI-compatible
+# endpoint). The committed Microgravity_Database*.csv files are produced by this
+# stage, so this is NOT required for the modeling/evaluation pipeline.
+docling
+PyMuPDF
+torch
+transformers
+Pillow
+openai
+pydantic
