@@ -43,32 +43,60 @@ ones that merely interpolate within papers.
 Models compared
 ---------------
   1. DecisionTreeRegressor
-  2. GradientBoostingRegressor
+  2. XGBRegressor               (XGBoost -- replaces the earlier Gradient Boosting)
   3. KNeighborsRegressor
+  4. MLPRegressor               (Multi-Layer Perceptron neural network)
 
 Everything (feature detection, target detection, paper-id detection, leakage
 removal) is done **automatically** with robust heuristics rather than hard-coded
 column names, so the script tolerates renamed / reordered columns.
+
+Data augmentation: Bootstrap resampling (BT)
+--------------------------------------------
+Following the founding paper of this work --
+
+    Jose Rivera, Daniel San Martin, Carlos Fernandez-Pello, Michael J. Gollner,
+    Augustin Guibaud, Sandra Olson, Dennis Stocker,
+    "Using Data Categorization and Augmentation Strategies to improve Machine
+     Learning Frameworks for Flame Spread over Electrical Wires."
+
+-- we add **bootstrap resampling** as a data-augmentation strategy. As described
+in that paper (Sec. 3.3): bootstrap resampling is implemented by sampling rows of
+the (training) dataset *with replacement* (random seed 42), generating an
+additional ~1000 synthetic training points. This "increases the density of
+empirically observed joint feature combinations without altering physical
+relationships" and "naturally preserves the physical admissibility of the
+original observations". The paper reports that BT is the most consistent
+augmentation strategy for tree- and neighbourhood-based models, pushing
+R2 > 0.9 under random cross-validation.
+
+CRITICAL adaptation for extrapolation: bootstrap rows are drawn ONLY from the
+*training* split (i.e. only from training papers). The test set is never
+augmented and never resampled, so the augmentation cannot leak unseen-paper
+information. Each model is therefore evaluated under four conditions:
+Random/RD, Random/RD+BT, Group/RD and Group/RD+BT, so the augmentation effect can
+be read directly.
 
 Outputs
 -------
 Everything is written to ``results/``:
   * predicted-vs-experimental, residual and error-histogram plots per model
   * per-paper performance distributions (RMSE / MAE / R2 histograms + boxplot)
-  * feature-importance plots (Decision Tree & Gradient Boosting)
+  * feature-importance plots (Decision Tree & XGBoost)
   * permutation-importance bar chart + ranked table (best group-aware model)
   * SHAP summary + bar plots (best group-aware model)
-  * ``model_comparison.csv`` and ``generalization_gap.csv``
+  * bootstrap FSR-distribution figure + augmentation-effect bar chart
+  * ``model_comparison.csv``, ``generalization_gap.csv``, ``augmentation_comparison.csv``
   * ``metrics.json`` and per-paper CSVs
-  * ``best_decision_tree.joblib`` / ``best_gradient_boosting.joblib`` /
-    ``best_knn.joblib``
+  * ``best_decision_tree.joblib`` / ``best_xgboost.joblib`` / ``best_knn.joblib`` /
+    ``best_mlp.joblib``
 
 Run
 ---
     python fsr_extrapolation_regression.py
     # optional flags:
     python fsr_extrapolation_regression.py --data Microgravity_Database.xlsm \
-        --out results --n-iter 40 --no-shap
+        --out results --n-iter 40 --no-shap --bootstrap-n 1000
 
 Author: ML / combustion research assistant
 Reproducibility: random_state = 42 wherever a seed is accepted.
@@ -94,7 +122,6 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from sklearn.compose import ColumnTransformer
-from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.impute import SimpleImputer
 from sklearn.inspection import permutation_importance
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
@@ -105,9 +132,15 @@ from sklearn.model_selection import (
     train_test_split,
 )
 from sklearn.neighbors import KNeighborsRegressor
+from sklearn.neural_network import MLPRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.tree import DecisionTreeRegressor
+
+# XGBoost replaces the previous Gradient Boosting estimator. It is a regularised,
+# histogram-based gradient-boosted-tree implementation that typically matches or
+# beats scikit-learn's GradientBoostingRegressor while training much faster.
+from xgboost import XGBRegressor
 
 import joblib
 
@@ -534,13 +567,18 @@ def build_preprocessor(
 
 
 def get_models_and_spaces() -> dict:
-    """Return the three estimators and their RandomizedSearchCV search spaces.
+    """Return the four estimators and their RandomizedSearchCV search spaces.
 
     The hyper-parameter ranges are deliberately chosen to fight over-fitting --
     the central risk for extrapolation. Shallower trees, larger leaf sizes and
     feature/row subsampling all push the models toward smoother, more
     transferable functions. The ``model__`` prefix targets the estimator step
     inside the shared Pipeline.
+
+    Model line-up (per the user's request): the previous Gradient Boosting model
+    is replaced by **XGBoost**, and a **Multi-Layer Perceptron** is added as a
+    fourth, neural-network model (the founding paper also uses DT, GB/XGB-style
+    boosting, KNN and MLP).
     """
     models = {
         # --- Decision Tree -------------------------------------------------
@@ -553,15 +591,28 @@ def get_models_and_spaces() -> dict:
                 "model__max_features": ["sqrt", "log2", 0.5, 0.8, 1.0, None],
             },
         },
-        # --- Gradient Boosting --------------------------------------------
-        "Gradient Boosting": {
-            "estimator": GradientBoostingRegressor(random_state=RANDOM_STATE),
+        # --- XGBoost (replaces Gradient Boosting) --------------------------
+        # Regularised, histogram-based gradient-boosted trees. We expose the
+        # tree-depth, shrinkage, sub-/column-sampling and L1/L2/gamma penalties
+        # that most directly control over-fitting on unseen papers.
+        "XGBoost": {
+            "estimator": XGBRegressor(
+                random_state=RANDOM_STATE,
+                objective="reg:squarederror",
+                tree_method="hist",
+                n_jobs=1,  # parallelism is handled by the outer RandomizedSearchCV
+                verbosity=0,
+            ),
             "param_dist": {
                 "model__n_estimators": [100, 200, 300, 500, 800],
                 "model__learning_rate": [0.01, 0.02, 0.05, 0.1, 0.2],
-                "model__max_depth": [2, 3, 4, 5],
+                "model__max_depth": [2, 3, 4, 5, 6],
                 "model__subsample": [0.6, 0.7, 0.8, 0.9, 1.0],
-                "model__min_samples_leaf": [1, 2, 4, 8, 16, 32],
+                "model__colsample_bytree": [0.5, 0.7, 0.8, 1.0],
+                "model__min_child_weight": [1, 2, 4, 6, 10],
+                "model__reg_lambda": [0.5, 1.0, 2.0, 5.0],
+                "model__reg_alpha": [0.0, 0.1, 0.5, 1.0],
+                "model__gamma": [0.0, 0.1, 0.3, 1.0],
             },
         },
         # --- K-Nearest Neighbors ------------------------------------------
@@ -573,8 +624,73 @@ def get_models_and_spaces() -> dict:
                 "model__p": [1, 2],  # 1 = Manhattan, 2 = Euclidean
             },
         },
+        # --- Multi-Layer Perceptron (neural network) ----------------------
+        # Operates on the StandardScaler-ed features. early_stopping + an L2
+        # penalty (alpha) guard against over-fitting; a high max_iter ensures
+        # convergence within each CV fit.
+        "MLP": {
+            "estimator": MLPRegressor(
+                random_state=RANDOM_STATE,
+                max_iter=1000,
+                early_stopping=True,
+                n_iter_no_change=20,
+            ),
+            "param_dist": {
+                "model__hidden_layer_sizes": [(100,), (128, 64), (100, 50), (64, 64, 32)],
+                "model__activation": ["relu", "tanh"],
+                "model__alpha": [1e-4, 1e-3, 1e-2, 1e-1],
+                "model__learning_rate_init": [1e-3, 5e-3, 1e-2],
+            },
+        },
     }
     return models
+
+
+# =============================================================================
+# 4b. Bootstrap data augmentation (founding paper, Rivera et al., Sec. 3.3)
+# =============================================================================
+
+def bootstrap_augment(X: pd.DataFrame, y: np.ndarray, n_extra: int,
+                      random_state: int = RANDOM_STATE):
+    """Bootstrap resampling augmentation, exactly as in the founding paper.
+
+    Sample ``n_extra`` rows *with replacement* from (X, y) and append them to the
+    original data, producing an augmented training set of size ``len(X)+n_extra``.
+
+    Why this is sound for extrapolation: bootstrap rows are exact copies of
+    existing observations, so they "preserve the physical admissibility of the
+    original observations" (Rivera et al.). We only ever call this on the
+    *training* split, so no unseen-paper (test) information is introduced. The
+    net effect is to re-weight the empirical distribution toward its high-density
+    (low-FSR) regions, which the paper found especially helps tree- and
+    neighbourhood-based models.
+    """
+    if n_extra <= 0:
+        return X.copy(), np.asarray(y).copy()
+    rng = np.random.RandomState(random_state)
+    idx = rng.randint(0, len(X), size=n_extra)
+    X_aug = pd.concat([X, X.iloc[idx]], axis=0, ignore_index=True)
+    y_aug = np.concatenate([np.asarray(y), np.asarray(y)[idx]])
+    return X_aug, y_aug
+
+
+def fit_pipeline_with_params(estimator, best_params, numeric_cols, categorical_cols,
+                             X_tr, y_tr):
+    """Build a fresh pipeline (own preprocessor) with the tuned params and fit it.
+
+    A new preprocessor + estimator are instantiated each time so that the four
+    evaluation conditions (Random/RD, Random/RD+BT, Group/RD, Group/RD+BT) never
+    share fitted state. Hyper-parameters are always the ones chosen by the
+    GroupKFold search, so only the *training data* differs across conditions.
+    """
+    pipe = Pipeline(
+        steps=[
+            ("preprocess", build_preprocessor(numeric_cols, categorical_cols)),
+            ("model", estimator.__class__(**{**estimator.get_params(), **best_params})),
+        ]
+    )
+    pipe.fit(X_tr, y_tr)
+    return pipe
 
 
 # =============================================================================
@@ -784,7 +900,7 @@ def run_shap(best_pipe, X_train, X_test, numeric_cols, categorical_cols,
     Xt_sample = Xt_test[idx]
 
     try:
-        if isinstance(model, (DecisionTreeRegressor, GradientBoostingRegressor)):
+        if isinstance(model, (DecisionTreeRegressor, XGBRegressor)):
             explainer = shap.TreeExplainer(model)
             shap_values = explainer.shap_values(Xt_sample)
         else:
@@ -857,6 +973,9 @@ def main() -> None:
                         help="Number of GroupKFold splits for tuning.")
     parser.add_argument("--test-size", type=float, default=0.2,
                         help="Test fraction for both split strategies.")
+    parser.add_argument("--bootstrap-n", type=int, default=1000,
+                        help="Number of bootstrap rows to ADD to the training set "
+                             "(founding paper uses 1000). Set 0 to disable BT.")
     parser.add_argument("--no-shap", action="store_true",
                         help="Disable the (slower) SHAP analysis.")
     args = parser.parse_args()
@@ -972,15 +1091,46 @@ def main() -> None:
     if n_cv < args.cv_splits:
         print(f"    (reduced GroupKFold splits to {n_cv} to match #train papers)")
 
+    # --------------------------------------------- bootstrap augmentation setup
+    _print_header("STEP 6b |  BOOTSTRAP DATA AUGMENTATION (Rivera et al.)")
+    n_boot = max(0, int(args.bootstrap_n))
+    if n_boot > 0:
+        print(f"Bootstrap resampling enabled: +{n_boot} rows sampled WITH "
+              f"replacement from the TRAINING split only (seed {RANDOM_STATE}).")
+        print("Per the founding paper, BT preserves physical admissibility (rows")
+        print("are exact copies of real observations) and densifies the empirical")
+        print("distribution. The test set is never augmented (no leakage).")
+        # Replicate the paper's Figure 4: real vs bootstrap-augmented FSR histogram
+        # (illustrated on the group-train split, the data the models actually see).
+        _, yg_tr_bt = bootstrap_augment(Xg_tr, yg_tr, n_boot)
+        fig, ax = plt.subplots(figsize=(6.5, 4.4))
+        bins = np.linspace(float(np.min(y)), float(np.max(y)), 40)
+        ax.hist(yg_tr, bins=bins, alpha=0.6, label=f"Real train (n={len(yg_tr)})",
+                color="steelblue", edgecolor="k")
+        ax.hist(yg_tr_bt, bins=bins, alpha=0.5,
+                label=f"Real + Bootstrap (n={len(yg_tr_bt)})",
+                color="darkorange", edgecolor="k")
+        ax.set_xlabel("Flame Spread Rate"); ax.set_ylabel("Frequency")
+        ax.set_title("Bootstrap augmentation: FSR distribution (training split)")
+        ax.legend(); ax.grid(alpha=0.25)
+        fig.tight_layout()
+        fig.savefig(out_dir / "bootstrap_fsr_distribution.png", dpi=150)
+        plt.close(fig)
+        print("Saved bootstrap FSR-distribution figure -> bootstrap_fsr_distribution.png")
+    else:
+        print("Bootstrap augmentation disabled (--bootstrap-n 0).")
+
     # ------------------------------------------------- tune + evaluate models
     models = get_models_and_spaces()
     group_cv = GroupKFold(n_splits=n_cv)
 
-    comparison_rows = []   # long-format: one row per (model, strategy)
-    gap_rows = []          # one row per model: random vs group RMSE + gap
-    fitted_group_models = {}  # name -> pipeline refit on group-train
+    comparison_rows = []   # long-format: one row per (model, strategy x augmentation)
+    gap_rows = []          # one row per model: random vs group RMSE + gap (RD only)
+    aug_rows = []          # one row per model: RD vs RD+BT effect (both splits)
+    fitted_group_models = {}  # name -> pipeline refit on group-train (RD)
     best_params_store = {}
     cv_rmse_store = {}
+    METRIC_KEYS = ["R2", "RMSE", "MAE", "MAPE", "NRMSE", "MBE"]
 
     for name, spec in models.items():
         _print_header(f"STEP 7  |  TUNE + EVALUATE: {name}")
@@ -1026,33 +1176,61 @@ def main() -> None:
         # --- Random-split evaluation (BASELINE): same chosen hyper-parameters,
         # fitted on a random-train split, scored on a random-test split. The
         # gap between this and the group result quantifies paper-overfitting.
-        random_pipe = Pipeline(
-            steps=[
-                ("preprocess", build_preprocessor(numeric_cols, categorical_cols)),
-                ("model", spec["estimator"].__class__(
-                    **{**spec["estimator"].get_params(), **best_params}
-                )),
-            ]
-        )
-        random_pipe.fit(Xr_tr, yr_tr)
-        yr_pred = random_pipe.predict(Xr_te)
-        m_random = regression_metrics(yr_te, yr_pred)
-        print(f"[RANDOM/BASELINE]     R2={m_random['R2']:.3f}  RMSE={m_random['RMSE']:.3f}  "
-              f"MAE={m_random['MAE']:.3f}  MAPE={m_random['MAPE']:.1f}%  "
-              f"NRMSE={m_random['NRMSE']:.3f}  MBE={m_random['MBE']:.3f}")
+        random_pipe = fit_pipeline_with_params(
+            spec["estimator"], best_params, numeric_cols, categorical_cols, Xr_tr, yr_tr)
+        m_random = regression_metrics(yr_te, random_pipe.predict(Xr_te))
+        print(f"[RANDOM / RD]         R2={m_random['R2']:.3f}  RMSE={m_random['RMSE']:.3f}  "
+              f"MAE={m_random['MAE']:.3f}  NRMSE={m_random['NRMSE']:.3f}")
 
-        # --- Record for the comparison tables.
-        comparison_rows.append({"Model": name, "Validation Strategy": "Random Split",
-                                **{k: m_random[k] for k in
-                                   ["R2", "RMSE", "MAE", "MAPE", "NRMSE", "MBE"]}})
-        comparison_rows.append({"Model": name, "Validation Strategy": "Group-Aware",
-                                **{k: m_group[k] for k in
-                                   ["R2", "RMSE", "MAE", "MAPE", "NRMSE", "MBE"]}})
+        # --- Bootstrap-augmented (RD+BT) variants. Augment ONLY the training
+        # data (group-train and random-train respectively); test sets untouched.
+        if n_boot > 0:
+            Xg_tr_bt, yg_tr_bt = bootstrap_augment(Xg_tr, yg_tr, n_boot)
+            Xr_tr_bt, yr_tr_bt = bootstrap_augment(Xr_tr, yr_tr, n_boot)
+            group_bt_pipe = fit_pipeline_with_params(
+                spec["estimator"], best_params, numeric_cols, categorical_cols,
+                Xg_tr_bt, yg_tr_bt)
+            random_bt_pipe = fit_pipeline_with_params(
+                spec["estimator"], best_params, numeric_cols, categorical_cols,
+                Xr_tr_bt, yr_tr_bt)
+            m_group_bt = regression_metrics(yg_te, group_bt_pipe.predict(Xg_te))
+            m_random_bt = regression_metrics(yr_te, random_bt_pipe.predict(Xr_te))
+            print(f"[GROUP / RD+BT]       R2={m_group_bt['R2']:.3f}  "
+                  f"RMSE={m_group_bt['RMSE']:.3f}  (Delta RMSE vs RD = "
+                  f"{m_group_bt['RMSE'] - m_group['RMSE']:+.3f})")
+            print(f"[RANDOM / RD+BT]      R2={m_random_bt['R2']:.3f}  "
+                  f"RMSE={m_random_bt['RMSE']:.3f}  (Delta RMSE vs RD = "
+                  f"{m_random_bt['RMSE'] - m_random['RMSE']:+.3f})")
+        else:
+            m_group_bt = m_random_bt = None
+
+        # --- Record for the comparison tables (one row per condition).
+        comparison_rows.append({"Model": name, "Validation Strategy": "Group-Aware (RD)",
+                                **{k: m_group[k] for k in METRIC_KEYS}})
+        comparison_rows.append({"Model": name, "Validation Strategy": "Random Split (RD)",
+                                **{k: m_random[k] for k in METRIC_KEYS}})
+        if m_group_bt is not None:
+            comparison_rows.append({"Model": name, "Validation Strategy": "Group-Aware (RD+BT)",
+                                    **{k: m_group_bt[k] for k in METRIC_KEYS}})
+            comparison_rows.append({"Model": name, "Validation Strategy": "Random Split (RD+BT)",
+                                    **{k: m_random_bt[k] for k in METRIC_KEYS}})
+
+        # Generalization gap is defined on the un-augmented (RD) results.
         gap_rows.append({
             "Model": name,
             "Random RMSE": m_random["RMSE"],
             "Group RMSE": m_group["RMSE"],
             "Generalization Gap": m_group["RMSE"] - m_random["RMSE"],
+        })
+        # Augmentation effect table (negative Delta = BT improved RMSE).
+        aug_rows.append({
+            "Model": name,
+            "Group RMSE (RD)": m_group["RMSE"],
+            "Group RMSE (RD+BT)": m_group_bt["RMSE"] if m_group_bt else np.nan,
+            "Group dRMSE (BT-RD)": (m_group_bt["RMSE"] - m_group["RMSE"]) if m_group_bt else np.nan,
+            "Random RMSE (RD)": m_random["RMSE"],
+            "Random RMSE (RD+BT)": m_random_bt["RMSE"] if m_random_bt else np.nan,
+            "Random dRMSE (BT-RD)": (m_random_bt["RMSE"] - m_random["RMSE"]) if m_random_bt else np.nan,
         })
 
         # --- Per-model diagnostic plots (computed on the PRIMARY group split).
@@ -1069,7 +1247,7 @@ def main() -> None:
         per_paper_analysis(yg_te, yg_pred, groups_te, out_dir, name)
 
         # --- Feature importance for the tree-based models.
-        if name in ("Decision Tree", "Gradient Boosting"):
+        if name in ("Decision Tree", "XGBoost"):
             pre = group_pipe.named_steps["preprocess"]
             mdl = group_pipe.named_steps["model"]
             feat_names = get_output_feature_names(pre, numeric_cols, categorical_cols)
@@ -1086,11 +1264,12 @@ def main() -> None:
             print(f"Top 10 features ({name}):")
             print(imp_df.head(10).to_string(index=False))
 
-        # --- Persist the best (group-aware) model for this estimator family.
+        # --- Persist the best (group-aware, RD) model for this estimator family.
         model_file = {
             "Decision Tree": "best_decision_tree.joblib",
-            "Gradient Boosting": "best_gradient_boosting.joblib",
+            "XGBoost": "best_xgboost.joblib",
             "KNN": "best_knn.joblib",
+            "MLP": "best_mlp.joblib",
         }[name]
         joblib.dump(group_pipe, out_dir / model_file)
         print(f"Saved best {name} model -> {out_dir / model_file}")
@@ -1144,9 +1323,9 @@ def main() -> None:
     # ------------------------------------------------- comparison tables
     _print_header("STEP 11 |  MODEL COMPARISON TABLES")
     comp_df = pd.DataFrame(comparison_rows)
-    # Sort by Group RMSE: build an ordering of models by their Group-Aware RMSE.
+    # Sort by the primary Group-Aware (RD) RMSE per model, then by strategy.
     group_rmse_order = (
-        comp_df[comp_df["Validation Strategy"] == "Group-Aware"]
+        comp_df[comp_df["Validation Strategy"] == "Group-Aware (RD)"]
         .set_index("Model")["RMSE"].sort_values()
     )
     comp_df["__order"] = comp_df["Model"].map(
@@ -1158,10 +1337,10 @@ def main() -> None:
         .reset_index(drop=True)
     )
     comp_df_round = comp_df.copy()
-    for col in ["R2", "RMSE", "MAE", "MAPE", "NRMSE", "MBE"]:
+    for col in METRIC_KEYS:
         comp_df_round[col] = comp_df_round[col].astype(float).round(4)
     comp_df_round.to_csv(out_dir / "model_comparison.csv", index=False)
-    print("Full comparison (sorted by Group RMSE):")
+    print("Full comparison (sorted by primary Group-Aware (RD) RMSE):")
     print(comp_df_round.to_string(index=False))
 
     gap_df = (
@@ -1176,6 +1355,37 @@ def main() -> None:
     print("paper-specific overfitting):")
     print(gap_df.to_string(index=False))
 
+    # --- Bootstrap augmentation effect table + bar chart (RD vs RD+BT).
+    if n_boot > 0:
+        aug_df = pd.DataFrame(aug_rows).sort_values("Group RMSE (RD)").reset_index(drop=True)
+        for col in aug_df.columns:
+            if col != "Model":
+                aug_df[col] = aug_df[col].astype(float).round(4)
+        aug_df.to_csv(out_dir / "augmentation_comparison.csv", index=False)
+        print(f"\nBootstrap augmentation effect (+{n_boot} rows; negative dRMSE = BT helped):")
+        print(aug_df.to_string(index=False))
+
+        # Grouped bar chart of RMSE across the four conditions per model.
+        order = list(aug_df["Model"])
+        labels = ["Group RD", "Group RD+BT", "Random RD", "Random RD+BT"]
+        cols = ["Group RMSE (RD)", "Group RMSE (RD+BT)", "Random RMSE (RD)", "Random RMSE (RD+BT)"]
+        x = np.arange(len(order))
+        w = 0.2
+        fig, ax = plt.subplots(figsize=(9, 5))
+        colors = ["indianred", "darkorange", "steelblue", "skyblue"]
+        for i, (lab, col, c) in enumerate(zip(labels, cols, colors)):
+            vals = [float(aug_df.loc[aug_df["Model"] == m, col].values[0]) for m in order]
+            ax.bar(x + (i - 1.5) * w, vals, width=w, label=lab, color=c, edgecolor="k")
+        ax.set_xticks(x); ax.set_xticklabels(order)
+        ax.set_ylabel("RMSE (lower is better)")
+        ax.set_title(f"FSR RMSE by model and data condition (RD vs RD+BT, +{n_boot} rows)")
+        ax.legend(); ax.grid(alpha=0.25, axis="y")
+        fig.tight_layout()
+        fig.savefig(out_dir / "augmentation_comparison.png", dpi=150)
+        plt.close(fig)
+    else:
+        aug_df = pd.DataFrame(aug_rows)
+
     # ----------------------------------------------------------- metrics dump
     metrics_blob = {
         "random_state": RANDOM_STATE,
@@ -1187,10 +1397,13 @@ def main() -> None:
         "numeric_features": numeric_cols,
         "categorical_features": categorical_cols,
         "best_model": best_model_name,
+        "bootstrap_n": n_boot,
+        "models": list(models.keys()),
         "cv_group_rmse": {k: float(v) for k, v in cv_rmse_store.items()},
         "best_params": best_params_store,
         "comparison": comp_df_round.to_dict(orient="records"),
         "generalization_gap": gap_df.to_dict(orient="records"),
+        "augmentation_comparison": aug_df.to_dict(orient="records"),
     }
     with open(out_dir / "metrics.json", "w") as f:
         json.dump(metrics_blob, f, indent=2, default=str)
@@ -1198,16 +1411,18 @@ def main() -> None:
     _print_header("DONE")
     print(f"All artefacts written to: {out_dir.resolve()}")
     print("Key files:")
-    print("  - model_comparison.csv         (R2/RMSE/MAE/MAPE/NRMSE/MBE, both strategies)")
+    print("  - model_comparison.csv         (R2/RMSE/MAE/MAPE/NRMSE/MBE; 4 conditions)")
     print("  - generalization_gap.csv       (random vs group RMSE + gap)")
+    print("  - augmentation_comparison.csv  (RD vs RD+BT bootstrap effect)")
     print("  - metrics.json                 (machine-readable summary)")
     print("  - pred_vs_true_*.png / residuals_*.png / error_hist_*.png")
     print("  - per_paper_*                  (per-paper extrapolation analysis)")
-    print("  - feature_importance_*         (Decision Tree & Gradient Boosting)")
+    print("  - feature_importance_*         (Decision Tree & XGBoost)")
     print("  - permutation_importance.*     (best model)")
     print("  - shap_summary_* / shap_bar_*  (best model)")
-    print("  - best_decision_tree.joblib / best_gradient_boosting.joblib / best_knn.joblib")
-    print(f"\nPRIMARY scientific result = the Group-Aware rows above. Best model: {best_model_name}.")
+    print("  - bootstrap_fsr_distribution.png / augmentation_comparison.png")
+    print("  - best_decision_tree.joblib / best_xgboost.joblib / best_knn.joblib / best_mlp.joblib")
+    print(f"\nPRIMARY scientific result = the Group-Aware (RD) rows. Best model: {best_model_name}.")
 
 
 if __name__ == "__main__":

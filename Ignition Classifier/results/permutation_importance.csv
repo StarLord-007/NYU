@@ -1,15 +1,15 @@
 feature,importance_mean,importance_std
-Oxygen Concentration,0.15625088186431815,0.013517349297528921
-Material of sample,0.030281741426003105,0.005352141486429067
-Ignition time (s),0.028548053071163693,0.004310332424241346
-"Dimensions of sample (Wire is in diameter, Cylindrical is in length x radius x thickness, Rectangle is in length x width x height, Shperical)",0.025641428278828492,0.004050081688292464
-Pressure,0.019607883298058782,0.0029134859490520847
-Gravity (g/gearth),0.01909446758152984,0.0066268952440496146
-Flow Velocity (Co flow is + and counter flow is -),0.0177542613959628,0.008189898642560057
-Ignition power (W),0.003972827200109275,0.0013079889618226816
-"Expireimental facility (Parabolic Aircraft, Drop Tower, Spacecraft, Sounding Rocket, Ground)",0.0033299196650053873,0.0019261108878704273
-"Ignition method (Wire, open flame, or Radiative Heater",0.0024530620604902185,0.000743883472108723
-"Internal geometry (Cylindrical , rectangular)",-0.0015739286770896643,0.0006860521824092536
-Rig Name,-0.0047830044832843695,0.004620974496136895
-"Geometry of Sample (flat, wire, or Cylindrical)",-0.004913406613413385,0.007385752852859748
-Internal Dimensions,-0.008115882660840623,0.0018235666675775251
+Oxygen Concentration,0.19388794064768677,0.009318812074891936
+Pressure,0.04513483989895548,0.00488546484658635
+Material of sample,0.040983136478459824,0.0059125086004218645
+"Dimensions of sample (Wire is in diameter, Cylindrical is in length x radius x thickness, Rectangle is in length x width x height, Shperical)",0.03514007419039174,0.004484441834811275
+Flow Velocity (Co flow is + and counter flow is -),0.010428984319883528,0.011144569887420542
+Rig Name,0.010015930452197341,0.003836900359757659
+Ignition time (s),0.007936096128900182,0.005181057903184733
+Ignition power (W),0.006251792175872251,0.0015174556571253598
+"Expireimental facility (Parabolic Aircraft, Drop Tower, Spacecraft, Sounding Rocket, Ground)",0.002623290321112426,0.002274167757689903
+"Ignition method (Wire, open flame, or Radiative Heater",0.0016094308277008085,0.0012240368499646154
+"Geometry of Sample (flat, wire, or Cylindrical)",-0.00019958580824279703,0.009256815872744073
+"Internal geometry (Cylindrical , rectangular)",-0.0008140461072801752,0.0015424929952093584
+Gravity (g/gearth),-0.009574429348444458,0.006930580095252317
+Internal Dimensions,-0.022307412211829414,0.00558898698960844

@@ -23,11 +23,19 @@
     "Expireimental facility (Parabolic Aircraft, Drop Tower, Spacecraft, Sounding Rocket, Ground)",
     "Ignition method (Wire, open flame, or Radiative Heater"
   ],
-  "best_model": "Gradient Boosting",
+  "best_model": "XGBoost",
+  "bootstrap_n": 1000,
+  "models": [
+    "Decision Tree",
+    "XGBoost",
+    "KNN",
+    "MLP"
+  ],
   "cv_group_rmse": {
     "Decision Tree": 13.166701035423893,
-    "Gradient Boosting": 12.902135593434261,
-    "KNN": 13.617938956454807
+    "XGBoost": 12.540176699161227,
+    "KNN": 13.617938956454807,
+    "MLP": 15.68237216669661
   },
   "best_params": {
     "Decision Tree": {
@@ -36,23 +44,77 @@
       "max_features": "log2",
       "max_depth": 12
     },
-    "Gradient Boosting": {
-      "subsample": 0.8,
-      "n_estimators": 500,
-      "min_samples_leaf": 1,
-      "max_depth": 2,
-      "learning_rate": 0.1
+    "XGBoost": {
+      "subsample": 0.9,
+      "reg_lambda": 5.0,
+      "reg_alpha": 1.0,
+      "n_estimators": 300,
+      "min_child_weight": 10,
+      "max_depth": 4,
+      "learning_rate": 0.02,
+      "gamma": 1.0,
+      "colsample_bytree": 0.7
     },
     "KNN": {
       "weights": "distance",
       "p": 1,
       "n_neighbors": 31
+    },
+    "MLP": {
+      "learning_rate_init": 0.005,
+      "hidden_layer_sizes": [
+        64,
+        64,
+        32
+      ],
+      "alpha": 0.1,
+      "activation": "tanh"
     }
   },
   "comparison": [
     {
+      "Model": "MLP",
+      "Validation Strategy": "Group-Aware (RD)",
+      "R2": 0.5675,
+      "RMSE": 10.4734,
+      "MAE": 5.2056,
+      "MAPE": 186.6701,
+      "NRMSE": 1.8157,
+      "MBE": 2.3303
+    },
+    {
+      "Model": "MLP",
+      "Validation Strategy": "Group-Aware (RD+BT)",
+      "R2": 0.2944,
+      "RMSE": 13.3784,
+      "MAE": 6.1724,
+      "MAPE": 227.0737,
+      "NRMSE": 2.3193,
+      "MBE": 3.025
+    },
+    {
+      "Model": "MLP",
+      "Validation Strategy": "Random Split (RD)",
+      "R2": 0.7046,
+      "RMSE": 11.6282,
+      "MAE": 3.5426,
+      "MAPE": 175.9428,
+      "NRMSE": 1.2502,
+      "MBE": -1.322
+    },
+    {
+      "Model": "MLP",
+      "Validation Strategy": "Random Split (RD+BT)",
+      "R2": 0.5789,
+      "RMSE": 13.8831,
+      "MAE": 4.2954,
+      "MAPE": 251.5621,
+      "NRMSE": 1.4926,
+      "MBE": -0.6149
+    },
+    {
       "Model": "KNN",
-      "Validation Strategy": "Group-Aware",
+      "Validation Strategy": "Group-Aware (RD)",
       "R2": 0.5188,
       "RMSE": 11.0481,
       "MAE": 5.6217,
@@ -62,7 +124,17 @@
     },
     {
       "Model": "KNN",
-      "Validation Strategy": "Random Split",
+      "Validation Strategy": "Group-Aware (RD+BT)",
+      "R2": 0.5241,
+      "RMSE": 10.9863,
+      "MAE": 5.6186,
+      "MAPE": 212.9023,
+      "NRMSE": 1.9046,
+      "MBE": 2.2314
+    },
+    {
+      "Model": "KNN",
+      "Validation Strategy": "Random Split (RD)",
       "R2": 0.8481,
       "RMSE": 8.3367,
       "MAE": 3.0008,
@@ -71,28 +143,18 @@
       "MBE": -0.339
     },
     {
-      "Model": "Gradient Boosting",
-      "Validation Strategy": "Group-Aware",
-      "R2": 0.4509,
-      "RMSE": 11.8018,
-      "MAE": 5.3507,
-      "MAPE": 175.7834,
-      "NRMSE": 2.046,
-      "MBE": 1.56
-    },
-    {
-      "Model": "Gradient Boosting",
-      "Validation Strategy": "Random Split",
-      "R2": 0.8643,
-      "RMSE": 7.882,
-      "MAE": 3.3579,
-      "MAPE": 376.8366,
-      "NRMSE": 0.8474,
-      "MBE": -0.3178
+      "Model": "KNN",
+      "Validation Strategy": "Random Split (RD+BT)",
+      "R2": 0.8519,
+      "RMSE": 8.2321,
+      "MAE": 2.9554,
+      "MAPE": 129.379,
+      "NRMSE": 0.885,
+      "MBE": -0.2639
     },
     {
       "Model": "Decision Tree",
-      "Validation Strategy": "Group-Aware",
+      "Validation Strategy": "Group-Aware (RD)",
       "R2": 0.3459,
       "RMSE": 12.8808,
       "MAE": 5.9965,
@@ -102,16 +164,82 @@
     },
     {
       "Model": "Decision Tree",
-      "Validation Strategy": "Random Split",
+      "Validation Strategy": "Group-Aware (RD+BT)",
+      "R2": -0.0055,
+      "RMSE": 15.9701,
+      "MAE": 7.4771,
+      "MAPE": 275.6823,
+      "NRMSE": 2.7686,
+      "MBE": 0.7285
+    },
+    {
+      "Model": "Decision Tree",
+      "Validation Strategy": "Random Split (RD)",
       "R2": 0.802,
       "RMSE": 9.5186,
       "MAE": 3.89,
       "MAPE": 270.3891,
       "NRMSE": 1.0234,
       "MBE": -0.3956
+    },
+    {
+      "Model": "Decision Tree",
+      "Validation Strategy": "Random Split (RD+BT)",
+      "R2": 0.7389,
+      "RMSE": 10.9313,
+      "MAE": 4.2077,
+      "MAPE": 623.644,
+      "NRMSE": 1.1753,
+      "MBE": -0.6528
+    },
+    {
+      "Model": "XGBoost",
+      "Validation Strategy": "Group-Aware (RD)",
+      "R2": 0.2936,
+      "RMSE": 13.3852,
+      "MAE": 6.1235,
+      "MAPE": 212.9916,
+      "NRMSE": 2.3205,
+      "MBE": 1.8365
+    },
+    {
+      "Model": "XGBoost",
+      "Validation Strategy": "Group-Aware (RD+BT)",
+      "R2": 0.3594,
+      "RMSE": 12.7467,
+      "MAE": 5.933,
+      "MAPE": 216.9059,
+      "NRMSE": 2.2098,
+      "MBE": 1.6509
+    },
+    {
+      "Model": "XGBoost",
+      "Validation Strategy": "Random Split (RD)",
+      "R2": 0.7289,
+      "RMSE": 11.1384,
+      "MAE": 4.1944,
+      "MAPE": 526.6552,
+      "NRMSE": 1.1975,
+      "MBE": -0.5104
+    },
+    {
+      "Model": "XGBoost",
+      "Validation Strategy": "Random Split (RD+BT)",
+      "R2": 0.7641,
+      "RMSE": 10.39,
+      "MAE": 4.0485,
+      "MAPE": 511.7488,
+      "NRMSE": 1.117,
+      "MBE": -0.327
     }
   ],
   "generalization_gap": [
+    {
+      "Model": "MLP",
+      "Random RMSE": 11.6282,
+      "Group RMSE": 10.4734,
+      "Generalization Gap": -1.1548
+    },
     {
       "Model": "KNN",
       "Random RMSE": 8.3367,
@@ -119,16 +247,54 @@
       "Generalization Gap": 2.7113
     },
     {
-      "Model": "Gradient Boosting",
-      "Random RMSE": 7.882,
-      "Group RMSE": 11.8018,
-      "Generalization Gap": 3.9198
-    },
-    {
       "Model": "Decision Tree",
       "Random RMSE": 9.5186,
       "Group RMSE": 12.8808,
       "Generalization Gap": 3.3623
+    },
+    {
+      "Model": "XGBoost",
+      "Random RMSE": 11.1384,
+      "Group RMSE": 13.3852,
+      "Generalization Gap": 2.2469
+    }
+  ],
+  "augmentation_comparison": [
+    {
+      "Model": "MLP",
+      "Group RMSE (RD)": 10.4734,
+      "Group RMSE (RD+BT)": 13.3784,
+      "Group dRMSE (BT-RD)": 2.9051,
+      "Random RMSE (RD)": 11.6282,
+      "Random RMSE (RD+BT)": 13.8831,
+      "Random dRMSE (BT-RD)": 2.255
+    },
+    {
+      "Model": "KNN",
+      "Group RMSE (RD)": 11.0481,
+      "Group RMSE (RD+BT)": 10.9863,
+      "Group dRMSE (BT-RD)": -0.0618,
+      "Random RMSE (RD)": 8.3367,
+      "Random RMSE (RD+BT)": 8.2321,
+      "Random dRMSE (BT-RD)": -0.1046
+    },
+    {
+      "Model": "Decision Tree",
+      "Group RMSE (RD)": 12.8808,
+      "Group RMSE (RD+BT)": 15.9701,
+      "Group dRMSE (BT-RD)": 3.0893,
+      "Random RMSE (RD)": 9.5186,
+      "Random RMSE (RD+BT)": 10.9313,
+      "Random dRMSE (BT-RD)": 1.4128
+    },
+    {
+      "Model": "XGBoost",
+      "Group RMSE (RD)": 13.3852,
+      "Group RMSE (RD+BT)": 12.7467,
+      "Group dRMSE (BT-RD)": -0.6385,
+      "Random RMSE (RD)": 11.1384,
+      "Random RMSE (RD+BT)": 10.39,
+      "Random dRMSE (BT-RD)": -0.7484
     }
   ]
 }

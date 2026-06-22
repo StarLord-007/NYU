@@ -62,12 +62,23 @@ STEP 6  |  BUILD THE TWO EVALUATION SPLITS
 [B] Group/paper split   : train=2104 (55 papers)  test=501 (14 papers)  -- no shared papers.
 
 ==============================================================================
+STEP 6b |  BOOTSTRAP DATA AUGMENTATION (Rivera et al.)
+==============================================================================
+Bootstrap resampling enabled: +1000 rows sampled WITH replacement from the TRAINING split only (seed 42).
+Per the founding paper, BT preserves physical admissibility (rows
+are exact copies of real observations) and densifies the empirical
+distribution. The test set is never augmented (no leakage).
+Saved bootstrap FSR-distribution figure -> bootstrap_fsr_distribution.png
+
+==============================================================================
 STEP 7  |  TUNE + EVALUATE: Decision Tree
 ==============================================================================
 Best GroupKFold CV RMSE (extrapolation) : 13.1667
 Best hyper-parameters                   : {'min_samples_split': 20, 'min_samples_leaf': 1, 'max_features': 'log2', 'max_depth': 12}
 [GROUP/UNSEEN-PAPERS] R2=0.346  RMSE=12.881  MAE=5.997  MAPE=222.9%  NRMSE=2.233  MBE=2.171
-[RANDOM/BASELINE]     R2=0.802  RMSE=9.519  MAE=3.890  MAPE=270.4%  NRMSE=1.023  MBE=-0.396
+[RANDOM / RD]         R2=0.802  RMSE=9.519  MAE=3.890  NRMSE=1.023
+[GROUP / RD+BT]       R2=-0.006  RMSE=15.970  (Delta RMSE vs RD = +3.089)
+[RANDOM / RD+BT]      R2=0.739  RMSE=10.931  (Delta RMSE vs RD = +1.413)
 Top 10 features (Decision Tree):
                                                                                                                                       feature  importance
                                                                                            Flow Velocity (Co flow is + and counter flow is -)    0.273321
@@ -83,25 +94,27 @@ Dimensions of sample (Wire is in diameter, Cylindrical is in length x radius x t
 Saved best Decision Tree model -> /workspace/FSR Regression/results/best_decision_tree.joblib
 
 ==============================================================================
-STEP 7  |  TUNE + EVALUATE: Gradient Boosting
+STEP 7  |  TUNE + EVALUATE: XGBoost
 ==============================================================================
-Best GroupKFold CV RMSE (extrapolation) : 12.9021
-Best hyper-parameters                   : {'subsample': 0.8, 'n_estimators': 500, 'min_samples_leaf': 1, 'max_depth': 2, 'learning_rate': 0.1}
-[GROUP/UNSEEN-PAPERS] R2=0.451  RMSE=11.802  MAE=5.351  MAPE=175.8%  NRMSE=2.046  MBE=1.560
-[RANDOM/BASELINE]     R2=0.864  RMSE=7.882  MAE=3.358  MAPE=376.8%  NRMSE=0.847  MBE=-0.318
-Top 10 features (Gradient Boosting):
-                                                                                                                                      feature  importance
-                                                                                                                         Oxygen Concentration    0.236934
-                                                                                      Material of sample_TENGU paper; area density 0.5 mg/cm²    0.188536
-                                                                                                                                     Pressure    0.150436
-Dimensions of sample (Wire is in diameter, Cylindrical is in length x radius x thickness, Rectangle is in length x width x height, Shperical)    0.065932
-                                                                                      Material of sample_TENGU paper; area density 0.2 mg/cm²    0.063747
-                                                                                                                          Internal Dimensions    0.045965
-                                      Expireimental facility (Parabolic Aircraft, Drop Tower, Spacecraft, Sounding Rocket, Ground)_Drop Tower    0.042654
-                                                                                      Material of sample_TENGU paper; area density 0.2 mg/cm1    0.041562
-                                                                                           Flow Velocity (Co flow is + and counter flow is -)    0.031601
-                                                                                                                  Material of sample_Kimwipes    0.018497
-Saved best Gradient Boosting model -> /workspace/FSR Regression/results/best_gradient_boosting.joblib
+Best GroupKFold CV RMSE (extrapolation) : 12.5402
+Best hyper-parameters                   : {'subsample': 0.9, 'reg_lambda': 5.0, 'reg_alpha': 1.0, 'n_estimators': 300, 'min_child_weight': 10, 'max_depth': 4, 'learning_rate': 0.02, 'gamma': 1.0, 'colsample_bytree': 0.7}
+[GROUP/UNSEEN-PAPERS] R2=0.294  RMSE=13.385  MAE=6.123  MAPE=213.0%  NRMSE=2.320  MBE=1.836
+[RANDOM / RD]         R2=0.729  RMSE=11.138  MAE=4.194  NRMSE=1.198
+[GROUP / RD+BT]       R2=0.359  RMSE=12.747  (Delta RMSE vs RD = -0.639)
+[RANDOM / RD+BT]      R2=0.764  RMSE=10.390  (Delta RMSE vs RD = -0.748)
+Top 10 features (XGBoost):
+                                                                                                feature  importance
+                                                Material of sample_TENGU paper; area density 0.5 mg/cm²    0.212403
+                                   Rig Name_NASA Glenn Research Center’s Zero Gravity Research Facility    0.100494
+                                                                                    Internal Dimensions    0.079268
+                                                                                   Oxygen Concentration    0.062884
+Expireimental facility (Parabolic Aircraft, Drop Tower, Spacecraft, Sounding Rocket, Ground)_Drop Tower    0.056797
+                                              Internal geometry (Cylindrical , rectangular)_Rectangular    0.048802
+                                                                    Rig Name_NASA Glenn Research Center    0.048330
+                                            Material of sample_Cellulose acetate sheet; MIL SPEC LP-504    0.041179
+                                                                                      Ignition time (s)    0.032248
+                                                                            Material of sample_Kimwipes    0.029629
+Saved best XGBoost model -> /workspace/FSR Regression/results/best_xgboost.joblib
 
 ==============================================================================
 STEP 7  |  TUNE + EVALUATE: KNN
@@ -109,54 +122,68 @@ STEP 7  |  TUNE + EVALUATE: KNN
 Best GroupKFold CV RMSE (extrapolation) : 13.6179
 Best hyper-parameters                   : {'weights': 'distance', 'p': 1, 'n_neighbors': 31}
 [GROUP/UNSEEN-PAPERS] R2=0.519  RMSE=11.048  MAE=5.622  MAPE=216.1%  NRMSE=1.915  MBE=2.169
-[RANDOM/BASELINE]     R2=0.848  RMSE=8.337  MAE=3.001  MAPE=149.7%  NRMSE=0.896  MBE=-0.339
+[RANDOM / RD]         R2=0.848  RMSE=8.337  MAE=3.001  NRMSE=0.896
+[GROUP / RD+BT]       R2=0.524  RMSE=10.986  (Delta RMSE vs RD = -0.062)
+[RANDOM / RD+BT]      R2=0.852  RMSE=8.232  (Delta RMSE vs RD = -0.105)
 Saved best KNN model -> /workspace/FSR Regression/results/best_knn.joblib
+
+==============================================================================
+STEP 7  |  TUNE + EVALUATE: MLP
+==============================================================================
+Best GroupKFold CV RMSE (extrapolation) : 15.6824
+Best hyper-parameters                   : {'learning_rate_init': 0.005, 'hidden_layer_sizes': (64, 64, 32), 'alpha': 0.1, 'activation': 'tanh'}
+[GROUP/UNSEEN-PAPERS] R2=0.568  RMSE=10.473  MAE=5.206  MAPE=186.7%  NRMSE=1.816  MBE=2.330
+[RANDOM / RD]         R2=0.705  RMSE=11.628  MAE=3.543  NRMSE=1.250
+[GROUP / RD+BT]       R2=0.294  RMSE=13.378  (Delta RMSE vs RD = +2.905)
+[RANDOM / RD+BT]      R2=0.579  RMSE=13.883  (Delta RMSE vs RD = +2.255)
+Saved best MLP model -> /workspace/FSR Regression/results/best_mlp.joblib
 
 ==============================================================================
 STEP 8  |  MODEL SELECTION (by GroupKFold CV RMSE)
 ==============================================================================
 GroupKFold CV RMSE per model (lower = better extrapolation):
-   Gradient Boosting    CV RMSE = 12.9021  <-- BEST
+   XGBoost              CV RMSE = 12.5402  <-- BEST
    Decision Tree        CV RMSE = 13.1667
    KNN                  CV RMSE = 13.6179
+   MLP                  CV RMSE = 15.6824
 
-Selected best model for unseen-paper prediction: Gradient Boosting
+Selected best model for unseen-paper prediction: XGBoost
 
 ==============================================================================
 STEP 9  |  PERMUTATION IMPORTANCE (best group-aware model)
 ==============================================================================
-Permutation importance ranking (Gradient Boosting):
+Permutation importance ranking (XGBoost):
                                                                                                                                       feature  importance_mean  importance_std
-                                                                                                                         Oxygen Concentration         5.804193        0.324695
-Dimensions of sample (Wire is in diameter, Cylindrical is in length x radius x thickness, Rectangle is in length x width x height, Shperical)         0.783574        0.196044
-                                                                                                                          Internal Dimensions         0.385479        0.098911
-                                                                                                                           Material of sample         0.144213        0.034063
-                                                                                           Flow Velocity (Co flow is + and counter flow is -)         0.100041        0.030879
-                                                                                                Internal geometry (Cylindrical , rectangular)         0.098105        0.013881
-                                                                                                                           Gravity (g/gearth)         0.051496        0.205401
-                                                                                                                            Ignition time (s)         0.051029        0.014388
-                                                                                              Geometry of Sample (flat, wire, or Cylindrical)         0.037064        0.010108
-                                                                                                                           Ignition power (W)         0.000000        0.000000
+                                                                                                                         Oxygen Concentration         4.169172        0.230414
+                                                                                                                            Ignition time (s)         0.698680        0.064176
+Dimensions of sample (Wire is in diameter, Cylindrical is in length x radius x thickness, Rectangle is in length x width x height, Shperical)         0.490434        0.128477
+                                                                                           Flow Velocity (Co flow is + and counter flow is -)         0.332636        0.052708
+                                                                                                                           Material of sample         0.225452        0.019804
+                                                                                                Internal geometry (Cylindrical , rectangular)         0.135991        0.021855
+                                                                                                                                     Rig Name         0.123820        0.409945
+                                                                                                                           Gravity (g/gearth)         0.101685        0.075570
+                                                                                                                          Internal Dimensions         0.055154        0.162213
                                                                                        Ignition method (Wire, open flame, or Radiative Heater         0.000000        0.000000
-                                                 Expireimental facility (Parabolic Aircraft, Drop Tower, Spacecraft, Sounding Rocket, Ground)        -0.194423        0.047022
-                                                                                                                                     Pressure        -0.303332        0.052608
-                                                                                                                                     Rig Name        -0.488067        0.100574
+                                                                                                                           Ignition power (W)         0.000000        0.000000
+                                                                                              Geometry of Sample (flat, wire, or Cylindrical)        -0.055806        0.030311
+                                                 Expireimental facility (Parabolic Aircraft, Drop Tower, Spacecraft, Sounding Rocket, Ground)        -0.089582        0.026445
+                                                                                                                                     Pressure        -0.727756        0.085297
 
 ==============================================================================
 STEP 10 |  SHAP ANALYSIS (best group-aware model)
 ==============================================================================
 
-  SHAP top drivers of Flame Spread Rate (Gradient Boosting):
-     1. Oxygen Concentration                          mean|SHAP| = 5.4032
-     2. Expireimental facility (Parabolic Aircraft, Drop Tower, Spacecraft, Sounding Rocket, Ground)_Drop Tower mean|SHAP| = 1.1156
-     3. Dimensions of sample (Wire is in diameter, Cylindrical is in length x radius x thickness, Rectangle is in length x width x height, Shperical) mean|SHAP| = 1.0645
-     4. Rig Name_MGLAB                                mean|SHAP| = 0.9823
-     5. Internal Dimensions                           mean|SHAP| = 0.9536
-     6. Material of sample_Kimwipes                   mean|SHAP| = 0.8481
-     7. Pressure                                      mean|SHAP| = 0.7244
-     8. Material of sample_TENGU paper; area density 0.5 mg/cm² mean|SHAP| = 0.3981
-     9. Gravity (g/gearth)                            mean|SHAP| = 0.3631
-    10. Flow Velocity (Co flow is + and counter flow is -) mean|SHAP| = 0.3224
+  SHAP top drivers of Flame Spread Rate (XGBoost):
+     1. Oxygen Concentration                          mean|SHAP| = 4.3704
+     2. Internal Dimensions                           mean|SHAP| = 1.3663
+     3. Expireimental facility (Parabolic Aircraft, Drop Tower, Spacecraft, Sounding Rocket, Ground)_Drop Tower mean|SHAP| = 1.2989
+     4. Pressure                                      mean|SHAP| = 0.9475
+     5. Rig Name_NASA Glenn Research Center’s Zero Gravity Research Facility mean|SHAP| = 0.9450
+     6. Dimensions of sample (Wire is in diameter, Cylindrical is in length x radius x thickness, Rectangle is in length x width x height, Shperical) mean|SHAP| = 0.8771
+     7. Flow Velocity (Co flow is + and counter flow is -) mean|SHAP| = 0.4869
+     8. Material of sample_Kimwipes                   mean|SHAP| = 0.4764
+     9. Ignition time (s)                             mean|SHAP| = 0.2070
+    10. Material of sample_TENGU paper; area density 0.5 mg/cm² mean|SHAP| = 0.1925
   Interpretation: features at the top of this ranking move the model's
   FSR prediction the most. In microgravity flame-spread physics the
   dominant drivers are typically oxygen concentration, flow velocity and
@@ -166,35 +193,55 @@ STEP 10 |  SHAP ANALYSIS (best group-aware model)
 ==============================================================================
 STEP 11 |  MODEL COMPARISON TABLES
 ==============================================================================
-Full comparison (sorted by Group RMSE):
-            Model Validation Strategy     R2    RMSE    MAE     MAPE  NRMSE     MBE
-              KNN         Group-Aware 0.5188 11.0481 5.6217 216.0707 1.9153  2.1690
-              KNN        Random Split 0.8481  8.3367 3.0008 149.6726 0.8963 -0.3390
-Gradient Boosting         Group-Aware 0.4509 11.8018 5.3507 175.7834 2.0460  1.5600
-Gradient Boosting        Random Split 0.8643  7.8820 3.3579 376.8366 0.8474 -0.3178
-    Decision Tree         Group-Aware 0.3459 12.8808 5.9965 222.8580 2.2330  2.1712
-    Decision Tree        Random Split 0.8020  9.5186 3.8900 270.3891 1.0234 -0.3956
+Full comparison (sorted by primary Group-Aware (RD) RMSE):
+        Model  Validation Strategy      R2    RMSE    MAE     MAPE  NRMSE     MBE
+          MLP     Group-Aware (RD)  0.5675 10.4734 5.2056 186.6701 1.8157  2.3303
+          MLP  Group-Aware (RD+BT)  0.2944 13.3784 6.1724 227.0737 2.3193  3.0250
+          MLP    Random Split (RD)  0.7046 11.6282 3.5426 175.9428 1.2502 -1.3220
+          MLP Random Split (RD+BT)  0.5789 13.8831 4.2954 251.5621 1.4926 -0.6149
+          KNN     Group-Aware (RD)  0.5188 11.0481 5.6217 216.0707 1.9153  2.1690
+          KNN  Group-Aware (RD+BT)  0.5241 10.9863 5.6186 212.9023 1.9046  2.2314
+          KNN    Random Split (RD)  0.8481  8.3367 3.0008 149.6726 0.8963 -0.3390
+          KNN Random Split (RD+BT)  0.8519  8.2321 2.9554 129.3790 0.8850 -0.2639
+Decision Tree     Group-Aware (RD)  0.3459 12.8808 5.9965 222.8580 2.2330  2.1712
+Decision Tree  Group-Aware (RD+BT) -0.0055 15.9701 7.4771 275.6823 2.7686  0.7285
+Decision Tree    Random Split (RD)  0.8020  9.5186 3.8900 270.3891 1.0234 -0.3956
+Decision Tree Random Split (RD+BT)  0.7389 10.9313 4.2077 623.6440 1.1753 -0.6528
+      XGBoost     Group-Aware (RD)  0.2936 13.3852 6.1235 212.9916 2.3205  1.8365
+      XGBoost  Group-Aware (RD+BT)  0.3594 12.7467 5.9330 216.9059 2.2098  1.6509
+      XGBoost    Random Split (RD)  0.7289 11.1384 4.1944 526.6552 1.1975 -0.5104
+      XGBoost Random Split (RD+BT)  0.7641 10.3900 4.0485 511.7488 1.1170 -0.3270
 
 Generalization gap (Group RMSE - Random RMSE; larger = more
 paper-specific overfitting):
-            Model  Random RMSE  Group RMSE  Generalization Gap
-              KNN       8.3367     11.0481              2.7113
-Gradient Boosting       7.8820     11.8018              3.9198
-    Decision Tree       9.5186     12.8808              3.3623
+        Model  Random RMSE  Group RMSE  Generalization Gap
+          MLP      11.6282     10.4734             -1.1548
+          KNN       8.3367     11.0481              2.7113
+Decision Tree       9.5186     12.8808              3.3623
+      XGBoost      11.1384     13.3852              2.2469
+
+Bootstrap augmentation effect (+1000 rows; negative dRMSE = BT helped):
+        Model  Group RMSE (RD)  Group RMSE (RD+BT)  Group dRMSE (BT-RD)  Random RMSE (RD)  Random RMSE (RD+BT)  Random dRMSE (BT-RD)
+          MLP          10.4734             13.3784               2.9051           11.6282              13.8831                2.2550
+          KNN          11.0481             10.9863              -0.0618            8.3367               8.2321               -0.1046
+Decision Tree          12.8808             15.9701               3.0893            9.5186              10.9313                1.4128
+      XGBoost          13.3852             12.7467              -0.6385           11.1384              10.3900               -0.7484
 
 ==============================================================================
 DONE
 ==============================================================================
 All artefacts written to: /workspace/FSR Regression/results
 Key files:
-  - model_comparison.csv         (R2/RMSE/MAE/MAPE/NRMSE/MBE, both strategies)
+  - model_comparison.csv         (R2/RMSE/MAE/MAPE/NRMSE/MBE; 4 conditions)
   - generalization_gap.csv       (random vs group RMSE + gap)
+  - augmentation_comparison.csv  (RD vs RD+BT bootstrap effect)
   - metrics.json                 (machine-readable summary)
   - pred_vs_true_*.png / residuals_*.png / error_hist_*.png
   - per_paper_*                  (per-paper extrapolation analysis)
-  - feature_importance_*         (Decision Tree & Gradient Boosting)
+  - feature_importance_*         (Decision Tree & XGBoost)
   - permutation_importance.*     (best model)
   - shap_summary_* / shap_bar_*  (best model)
-  - best_decision_tree.joblib / best_gradient_boosting.joblib / best_knn.joblib
+  - bootstrap_fsr_distribution.png / augmentation_comparison.png
+  - best_decision_tree.joblib / best_xgboost.joblib / best_knn.joblib / best_mlp.joblib
 
-PRIMARY scientific result = the Group-Aware rows above. Best model: Gradient Boosting.
+PRIMARY scientific result = the Group-Aware (RD) rows. Best model: XGBoost.

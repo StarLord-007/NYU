@@ -1,4 +1,5 @@
 Model,Random ROC-AUC,Group ROC-AUC,Generalization Gap
-Gradient Boosting,0.8995,0.7226,0.1768
+XGBoost,0.9059,0.7266,0.1793
+MLP,0.8616,0.6909,0.1708
 KNN,0.8588,0.6505,0.2083
 Decision Tree,0.7925,0.4717,0.3208
