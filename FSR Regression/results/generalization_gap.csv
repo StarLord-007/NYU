@@ -1,0 +1,4 @@
+Model,Random RMSE,Group RMSE,Generalization Gap
+KNN,8.3367,11.0481,2.7113
+Gradient Boosting,7.882,11.8018,3.9198
+Decision Tree,9.5186,12.8808,3.3623
