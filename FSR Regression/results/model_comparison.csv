@@ -1,7 +1,0 @@
-Model,Validation Strategy,R2,RMSE,MAE,MAPE,NRMSE,MBE
-KNN,Group-Aware,0.5188,11.0481,5.6217,216.0707,1.9153,2.169
-KNN,Random Split,0.8481,8.3367,3.0008,149.6726,0.8963,-0.339
-Gradient Boosting,Group-Aware,0.4509,11.8018,5.3507,175.7834,2.046,1.56
-Gradient Boosting,Random Split,0.8643,7.882,3.3579,376.8366,0.8474,-0.3178
-Decision Tree,Group-Aware,0.3459,12.8808,5.9965,222.858,2.233,2.1712
-Decision Tree,Random Split,0.802,9.5186,3.89,270.3891,1.0234,-0.3956

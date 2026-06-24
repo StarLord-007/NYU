@@ -10,15 +10,16 @@ for the microgravity-combustion literature database (``Microgravity_Database.xls
 A note on "regression" vs "classification"
 ------------------------------------------
 The companion study predicts Flame Spread Rate, a continuous quantity, and is a
-*regression* problem. This script is requested to live in an ``Ignition Regression``
-folder and to mirror that study with the same three model families. However, the
-ignition target is **binary** ("Yes"/"No"), so the scientifically correct task is
-**classification**, not regression. We therefore keep the requested folder name but
-use the *classifier* variants of the three estimators:
+*regression* problem. This script lives in an ``ignition classifier`` folder and
+mirrors that study with the same four model families. The ignition target is
+**binary** ("Yes"/"No"), so the scientifically correct task is **classification**,
+not regression. We therefore use the classifier variants of the models, and
+use the *classifier* variants of the four estimators:
 
   1. DecisionTreeClassifier
-  2. GradientBoostingClassifier
+  2. XGBClassifier               (XGBoost -- replaces the earlier Gradient Boosting)
   3. KNeighborsClassifier
+  4. MLPClassifier               (Multi-Layer Perceptron neural network)
 
 and report classification metrics (ROC-AUC, PR-AUC, F1, balanced accuracy, MCC, ...)
 instead of regression metrics. Everything else -- the extrapolation-first,
@@ -48,17 +49,18 @@ Outputs (written to ``results/`` next to this script)
 -----------------------------------------------------
   * confusion-matrix, ROC-curve and precision-recall-curve plots per model
   * per-paper performance distributions (accuracy / F1 / ROC-AUC + boxplot)
-  * feature-importance plots (Decision Tree & Gradient Boosting)
+  * feature-importance plots (Decision Tree & XGBoost)
   * permutation-importance bar chart + ranked table (best group-aware model)
   * SHAP summary + bar plots (best group-aware model)
   * ``model_comparison.csv`` and ``generalization_gap.csv``
   * ``metrics.json`` and per-paper CSVs
-  * ``best_decision_tree.joblib`` / ``best_gradient_boosting.joblib`` / ``best_knn.joblib``
+  * ``best_decision_tree.joblib`` / ``best_xgboost.joblib`` / ``best_knn.joblib`` /
+    ``best_mlp.joblib``
 
 Run
 ---
-    python "Ignition Regression/ignition_classification.py"
-    python "Ignition Regression/ignition_classification.py" --no-shap --n-iter 60
+    python "ignition classifier/ignition_classification.py"
+    python "ignition classifier/ignition_classification.py" --no-shap --n-iter 60
 
 Reproducibility: random_state = 42 wherever a seed is accepted.
 """
@@ -82,7 +84,6 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from sklearn.compose import ColumnTransformer
-from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.impute import SimpleImputer
 from sklearn.inspection import permutation_importance
 from sklearn.metrics import (
@@ -105,9 +106,14 @@ from sklearn.model_selection import (
     train_test_split,
 )
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.tree import DecisionTreeClassifier
+
+# XGBoost replaces the previous Gradient Boosting estimator (regularised,
+# histogram-based gradient-boosted trees; fast and strong on tabular data).
+from xgboost import XGBClassifier
 
 import joblib
 
@@ -448,12 +454,16 @@ def build_preprocessor(numeric_cols, categorical_cols) -> ColumnTransformer:
 
 
 def get_models_and_spaces() -> dict:
-    """Three classifiers + RandomizedSearchCV search spaces.
+    """Four classifiers + RandomizedSearchCV search spaces.
+
+    Per the user's request, the previous Gradient Boosting model is replaced by
+    **XGBoost** and a **Multi-Layer Perceptron** is added as a fourth model.
 
     Ranges favour regularisation (the main risk for extrapolation). The Decision
-    Tree also tunes ``class_weight`` to cope with the ignition class imbalance;
-    Gradient Boosting and KNN have no native class-weight knob, so we rely on
-    ROC-AUC tuning and report balanced metrics for a fair read under imbalance.
+    Tree tunes ``class_weight`` to cope with the ignition class imbalance; XGBoost
+    uses ``scale_pos_weight`` (set from the training balance) for the same reason;
+    KNN and MLP have no native class-weight knob, so we rely on ROC-AUC tuning and
+    report balanced metrics for a fair read under imbalance.
     """
     return {
         "Decision Tree": {
@@ -466,14 +476,28 @@ def get_models_and_spaces() -> dict:
                 "model__class_weight": [None, "balanced"],
             },
         },
-        "Gradient Boosting": {
-            "estimator": GradientBoostingClassifier(random_state=RANDOM_STATE),
+        # --- XGBoost (replaces Gradient Boosting) --------------------------
+        "XGBoost": {
+            "estimator": XGBClassifier(
+                random_state=RANDOM_STATE,
+                objective="binary:logistic",
+                eval_metric="logloss",
+                tree_method="hist",
+                n_jobs=1,
+                verbosity=0,
+            ),
             "param_dist": {
                 "model__n_estimators": [100, 200, 300, 500, 800],
                 "model__learning_rate": [0.01, 0.02, 0.05, 0.1, 0.2],
-                "model__max_depth": [2, 3, 4, 5],
+                "model__max_depth": [2, 3, 4, 5, 6],
                 "model__subsample": [0.6, 0.7, 0.8, 0.9, 1.0],
-                "model__min_samples_leaf": [1, 2, 4, 8, 16, 32],
+                "model__colsample_bytree": [0.5, 0.7, 0.8, 1.0],
+                "model__min_child_weight": [1, 2, 4, 6, 10],
+                "model__reg_lambda": [0.5, 1.0, 2.0, 5.0],
+                "model__reg_alpha": [0.0, 0.1, 0.5, 1.0],
+                "model__gamma": [0.0, 0.1, 0.3, 1.0],
+                # Down-weight/upweight the positive class to fight imbalance.
+                "model__scale_pos_weight": [1.0, 2.0, 3.0],
             },
         },
         "KNN": {
@@ -482,6 +506,21 @@ def get_models_and_spaces() -> dict:
                 "model__n_neighbors": [3, 5, 7, 9, 11, 15, 21, 31],
                 "model__weights": ["uniform", "distance"],
                 "model__p": [1, 2],
+            },
+        },
+        # --- Multi-Layer Perceptron (neural network) ----------------------
+        "MLP": {
+            "estimator": MLPClassifier(
+                random_state=RANDOM_STATE,
+                max_iter=1000,
+                early_stopping=True,
+                n_iter_no_change=20,
+            ),
+            "param_dist": {
+                "model__hidden_layer_sizes": [(100,), (128, 64), (100, 50), (64, 64, 32)],
+                "model__activation": ["relu", "tanh"],
+                "model__alpha": [1e-4, 1e-3, 1e-2, 1e-1],
+                "model__learning_rate_init": [1e-3, 5e-3, 1e-2],
             },
         },
     }
@@ -648,7 +687,7 @@ def run_shap(best_pipe, X_train, X_test, numeric_cols, categorical_cols,
     Xt_sample = Xt_test[idx]
 
     try:
-        if isinstance(model, (DecisionTreeClassifier, GradientBoostingClassifier)):
+        if isinstance(model, (DecisionTreeClassifier, XGBClassifier)):
             explainer = shap.TreeExplainer(model)
             shap_values = explainer.shap_values(Xt_sample)
         else:
@@ -911,7 +950,7 @@ def main() -> None:
 
         per_paper_analysis(yg_te, yg_pred, yg_proba, groups_te, out_dir, name)
 
-        if name in ("Decision Tree", "Gradient Boosting"):
+        if name in ("Decision Tree", "XGBoost"):
             pre = group_pipe.named_steps["preprocess"]
             mdl = group_pipe.named_steps["model"]
             feat_names = get_output_feature_names(pre, numeric_cols, categorical_cols)
@@ -927,8 +966,9 @@ def main() -> None:
 
         model_file = {
             "Decision Tree": "best_decision_tree.joblib",
-            "Gradient Boosting": "best_gradient_boosting.joblib",
+            "XGBoost": "best_xgboost.joblib",
             "KNN": "best_knn.joblib",
+            "MLP": "best_mlp.joblib",
         }[name]
         joblib.dump(group_pipe, out_dir / model_file)
         print(f"Saved best {name} model -> {out_dir / model_file}")

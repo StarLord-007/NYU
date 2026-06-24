@@ -1,0 +1,90 @@
+feature,importance
+Material of sample_TENGU paper; area density 0.5 mg/cm²,0.14316711
+Rig Name_NASA Glenn Research Center’s Zero Gravity Research Facility,0.090822496
+"Internal geometry (Cylindrical , rectangular)_Rectangular",0.06890398
+Oxygen Concentration,0.059455644
+Internal Dimensions,0.05686946
+Ignition time (s),0.04111381
+"Expireimental facility (Parabolic Aircraft, Drop Tower, Spacecraft, Sounding Rocket, Ground)_Drop Tower",0.034938756
+"Internal geometry (Cylindrical , rectangular)_Cylindrical",0.033663966
+Pressure,0.03261569
+Rig Name_NASA Glenn Research Center,0.032175515
+"Dimensions of sample (Wire is in diameter, Cylindrical is in length x radius x thickness, Rectangle is in length x width x height, Shperical)",0.030592429
+Material of sample_Polyphenolic open-cell foam,0.028993048
+Flow Velocity (Co flow is + and counter flow is -),0.028501881
+Rig Name_NASA Zero Gravity Facility,0.025699485
+Material of sample_Cellulose acetate sheet; MIL SPEC LP-504,0.023042815
+Material of sample_Kimwipes,0.023002835
+"Geometry of Sample (flat, wire, or Cylindrical)_flat",0.017783094
+"Geometry of Sample (flat, wire, or Cylindrical)_Flat",0.017089864
+Material of sample_Cellulosic paper (Kimwipes),0.016127052
+"Geometry of Sample (flat, wire, or Cylindrical)_Wire",0.015969899
+Material of sample_Polyurethane foam fuel,0.014436396
+Rig Name_FLARE,0.013502228
+"Expireimental facility (Parabolic Aircraft, Drop Tower, Spacecraft, Sounding Rocket, Ground)_Spacecraft",0.013023575
+Material of sample_Whatman 44 filter paper,0.011008421
+Rig Name_NASA Narrow Channel Apparatus,0.010487319
+Gravity (g/gearth),0.010456873
+"Ignition method (Wire, open flame, or Radiative Heater_Wire",0.010412749
+"Expireimental facility (Parabolic Aircraft, Drop Tower, Spacecraft, Sounding Rocket, Ground)_Parabolic Aircraft",0.010168382
+Material of sample_Cellulose acetate sheet; MIL-SPEC LP-504,0.009962129
+Rig Name_MGLAB,0.009507702
+"Geometry of Sample (flat, wire, or Cylindrical)_Cylindrical",0.0091955075
+Rig Name_NASA Glenn Zero Gravity Facility,0.008820963
+Material of sample_PMMA,0.007085302
+Rig Name_GIFFTS,0.007066731
+Rig Name_NASA KC-135,0.0063623046
+"Internal geometry (Cylindrical , rectangular)_Hemispherical",0.0062126606
+Rig Name_NCCRD IIT Madras combustion duct,0.0056202123
+"Expireimental facility (Parabolic Aircraft, Drop Tower, Spacecraft, Sounding Rocket, Ground)_Ground",0.0049613602
+Rig Name_JAMIC dropshaft,0.004246298
+Rig Name_JAMIC,0.0027866948
+Material of sample_NiCr core; LDPE outer,0.0015119864
+Material of sample_Cu core; LDPE outer,0.0013407212
+Ignition power (W),0.001294671
+Material of sample_Cu core; ETFE outer,0.0
+Material of sample_Cotton,0.0
+Material of sample_Cellulosic paper,0.0
+Material of sample_Bleached cheesecloth; area density 2.0 mg/cm²,0.0
+Material of sample_Bleached cheesecloth; area density 4.38 mg/cm,0.0
+Material of sample_Cast PMMA,0.0
+"Geometry of Sample (flat, wire, or Cylindrical)_wire",0.0
+Material of sample_Bleached cheesecloth; area density 13.14 mg/c,0.0
+Material of sample_Cellulosic tSpacecraftue,0.0
+Material of sample_Cellulosic strand,0.0
+Material of sample_LDPE,0.0
+Material of sample_High-density polyethylene (HDPE),0.0
+Material of sample_Cu core; black LDPE outer,0.0
+Material of sample_HDPE,0.0
+Rig Name_Fire Research Device (FReD),0.0
+Rig Name_DARTFire,0.0
+Rig Name_DIAMONDS,0.0
+Rig Name_External-radiation wire flammability chamber,0.0
+Rig Name_BASS-II,0.0
+Material of sample_TENGU paper; area density 0.9 mg/cm²,0.0
+Rig Name_0 wind tunnel / HOI test apparatus,0.0
+Rig Name_BASS,0.0
+Material of sample_TENGU paper; area density 0.2 mg/cm1,0.0
+Material of sample_TENGU paper; area density 0.2 mg/cm²,0.0
+Material of sample_TENGU paper; area density 0.35 mg/cm,0.0
+Material of sample_Extruded PMMA,0.0
+Material of sample_NiCr core; ETFE outer,0.0
+Material of sample_NiCr core; LDPE insulation,0.0
+Material of sample_Polydimethylsiloxane (PDMS),0.0
+Material of sample_SIBAL,0.0
+Material of sample_Cu core; LDPE insulation,0.0
+Rig Name_Saffire IV,0.0
+Rig Name_Saffire II,0.0
+Rig Name_Saffire III,0.0
+Rig Name_SJ-10 satellite,0.0
+Rig Name_RITSI,0.0
+Rig Name_NASA LeRC,0.0
+Rig Name_Saffire I,0.0
+"Expireimental facility (Parabolic Aircraft, Drop Tower, Spacecraft, Sounding Rocket, Ground)_Centrifuge",0.0
+Rig Name_Saffire V,0.0
+Rig Name_TEXUS 57,0.0
+"Expireimental facility (Parabolic Aircraft, Drop Tower, Spacecraft, Sounding Rocket, Ground)_Sounding Rocket",0.0
+"Ignition method (Wire, open flame, or Radiative Heater_Open Flame",0.0
+"Ignition method (Wire, open flame, or Radiative Heater_Open flame",0.0
+"Ignition method (Wire, open flame, or Radiative Heater_Radiative Heater",0.0
+"Ignition method (Wire, open flame, or Radiative Heater_open flame",0.0

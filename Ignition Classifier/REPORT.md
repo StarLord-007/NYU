@@ -1,55 +1,62 @@
 # Predicting Ignition (Yes/No) in Microgravity Combustion
 ### A paper-aware (extrapolation-first) machine-learning study
 
-**Models compared:** Decision Tree · Gradient Boosting · K-Nearest Neighbors
+**Models compared:** Decision Tree · **XGBoost** · K-Nearest Neighbors · **MLP** (neural network)
 **Target:** Ignition (Yes/No) — a **binary classification** problem
 **Data:** `Microgravity_Database.xlsm` (sheet `Sheet2`)
 **Code:** [`ignition_classification.py`](ignition_classification.py)
 **Reproducibility:** `random_state = 42` everywhere; full console log in [`run_log.txt`](run_log.txt)
 
+> **What changed in this revision**
+> 1. The Gradient Boosting model has been **replaced by XGBoost**.
+> 2. A fourth model, a **Multi-Layer Perceptron (MLP)** neural network, has been added.
+> 3. The folder has been renamed to `ignition classifier`.
+
 ---
 
 ## 0. Regression vs classification — an important note
 
-This folder is named **`Ignition Regression`** to mirror the companion **`FSR Regression`**
-study, and it uses the **same three model families** and the **same paper-aware,
-extrapolation-first methodology**. However, the ignition target is **binary** (`Yes`/`No`),
-so the scientifically correct task is **classification, not regression**. Forcing a regressor
-onto a 0/1 label would produce meaningless metrics (e.g. R² on a Bernoulli target). We
-therefore keep the requested folder name but use the **classifier** variants
-(`DecisionTreeClassifier`, `GradientBoostingClassifier`, `KNeighborsClassifier`) and report
-classification metrics (ROC-AUC, PR-AUC, F1, balanced accuracy, MCC, …). This matches how the
-repository's existing ignition models (`xgb_ignition_model.py`, `mlp_ignition_model.py`) treat
-the problem.
+The companion folder is named `FSR Regression` and this one mirrors it with the
+**same four model families** and the **same paper-aware, extrapolation-first
+methodology**. However, the ignition target is **binary** (`Yes`/`No`), so the
+scientifically correct task is **classification**, not regression. Forcing a
+regressor onto a 0/1 label would yield meaningless metrics (e.g. R² on a Bernoulli
+target). We therefore use the **classifier** variants
+(`DecisionTreeClassifier`, `XGBClassifier`, `KNeighborsClassifier`,
+`MLPClassifier`) and report classification metrics (ROC-AUC, PR-AUC, F1, balanced
+accuracy, MCC, …). Bootstrap augmentation was requested for the FSR task only and
+is not applied here.
 
 ---
 
 ## 1. Executive summary
 
-We train, tune, evaluate and compare three classifiers to predict whether a microgravity
-combustion sample **ignites**, using the same extrapolation-first protocol as the FSR study:
-because the database aggregates many correlated rows per paper, all rows of any paper are kept
-entirely in train **or** entirely in test (never split), so we measure prediction on
-**completely unseen papers / campaigns / rigs**.
+We train, tune, evaluate and compare four classifiers to predict whether a
+microgravity combustion sample **ignites**, keeping all rows of any paper together
+(train **or** test, never split) so we measure prediction on **completely unseen
+papers**.
 
 **Headline result (primary, group-aware / unseen papers, sorted by ROC-AUC):**
 
 | Rank | Model | ROC-AUC | PR-AUC | Bal. Acc | F1 | MCC |
 |---|---|---|---|---|---|---|
-| 1 | **Gradient Boosting** | **0.723** | 0.851 | 0.612 | 0.825 | 0.259 |
-| 2 | **KNN** | 0.650 | 0.805 | 0.588 | 0.787 | 0.184 |
-| 3 | **Decision Tree** | 0.472 | 0.726 | 0.474 | 0.787 | −0.077 |
+| 1 | **XGBoost** | **0.727** | 0.880 | 0.596 | 0.844 | 0.274 |
+| 2 | **MLP** | 0.691 | 0.858 | 0.561 | 0.806 | 0.147 |
+| 3 | **KNN** | 0.650 | 0.805 | 0.588 | 0.787 | 0.184 |
+| 4 | **Decision Tree** | 0.472 | 0.726 | 0.474 | 0.787 | −0.077 |
 
-**Best model by the tuning criterion (GroupKFold CV ROC-AUC): Gradient Boosting** (0.685).
+**Best model by the tuning/selection criterion (GroupKFold CV ROC-AUC): XGBoost**
+(0.681) — and XGBoost is also best on the held-out unseen papers (0.727), so the
+selection is unambiguous this time.
 
 Two findings stand out:
 
-1. **Extrapolation is much harder than interpolation.** Group-aware ROC-AUC (0.47–0.72) is far
-   below random-split ROC-AUC (0.79–0.90); the generalization gap is **+0.18 to +0.32 AUC**.
-2. **The Decision Tree fails dramatically out-of-sample** — its group ROC-AUC (0.472) is
-   *below 0.5* (worse than random ranking on unseen papers) despite a respectable random-split
-   AUC of 0.792. This is textbook paper-specific over-fitting and is exactly what a random
-   split hides.
+1. **Extrapolation is much harder than interpolation.** Group-aware ROC-AUC
+   (0.47–0.73) is far below random-split ROC-AUC (0.79–0.91); the generalization
+   gap is **+0.17 to +0.32 AUC**.
+2. **The Decision Tree fails dramatically out-of-sample** — group ROC-AUC 0.472
+   (below chance) and MCC < 0, despite a 0.79 random-split AUC. This is textbook
+   paper-specific over-fitting that a random split hides.
 
 ---
 
@@ -59,342 +66,236 @@ Two findings stand out:
 |---|---|
 | Rows loaded from `Sheet2` | 5,118 |
 | Rows with a valid Yes/No label (kept) | **5,093** |
-| Rows removed (missing / ambiguous label) | 25 |
 | Detected target column | `Ignition (Yes/No)` |
 | Detected paper-grouping column | `Article (MLA)` |
 | Unique papers | **93** |
-| Numeric features | 8 |
-| Categorical features | 6 |
+| Numeric / categorical features | 8 / 6 |
 
-**Class balance (imbalanced):**
+**Class balance (imbalanced):** Ignition (1) = 3,887 (**76.3%**); No-ignition (0)
+= 1,206 (23.7%). Because a trivial "always ignite" guess already scores ~76%
+accuracy, the honest metrics are **ROC-AUC, PR-AUC, balanced accuracy and MCC**,
+which a majority-class guesser cannot fake. These are also what we tune/select on.
 
-| Class | Count | Share |
+**Samples per paper:** mean 54.8, median 33, min 4, max 309.
+
+The realised group split: **train = 4,047 rows (74 papers)**, **test = 1,046 rows
+(19 papers)**, test prevalence 72.2% ignition, no shared papers.
+
+---
+
+## 3. Design choices and leakage prevention
+
+* **Automatic, binary-aware target detection** selects `Ignition (Yes/No)` (a
+  name match plus ≥80% values mapping to {0,1}), distinguishing it from the
+  *input* columns `Ignition method/power/time`.
+* **Leakage prevention:** the post-ignition outcomes `FSR`, `Flame Length`,
+  `HRR`, `Smoke/Aerosols` are removed (they are observed only *after* ignition),
+  along with free-text notes (`Info`) and paper fingerprints (`Authors`, `DOI`,
+  `Article`). The ignition **stimulus** (`method`, `power`, `time`) is **kept** as
+  a valid predictor.
+* **Shared preprocessing**: median impute + `StandardScaler` (numeric);
+  most-frequent impute + `OneHotEncoder(handle_unknown="ignore")` (categorical).
+* **Two strategies:** stratified random split (baseline/interpolation) and
+  `GroupShuffleSplit` by paper (primary/extrapolation, with an assertion of no
+  shared papers).
+* **Tuning always via `GroupKFold`** with `scoring="roc_auc"`. The Decision Tree
+  tunes `class_weight`; XGBoost tunes `scale_pos_weight`; KNN/MLP rely on AUC
+  tuning and balanced metrics for the imbalance.
+
+---
+
+## 4. Models and tuned hyper-parameters
+
+| Model | Search space | Selected best hyper-parameters |
 |---|---|---|
-| Ignition (1) | 3,887 | **76.3%** |
-| No-ignition (0) | 1,206 | 23.7% |
-
-The 76/24 imbalance is why **accuracy alone is misleading** here: a trivial "always predict
-ignition" classifier already scores ~76% accuracy. The honest metrics are therefore
-**ROC-AUC, PR-AUC, balanced accuracy and MCC**, which a majority-class guesser cannot fake.
-
-**Samples per paper** (why paper-aware evaluation is essential):
-
-| Statistic | Value |
-|---|---|
-| Mean | 54.76 |
-| Median | 33.0 |
-| Min | 4 |
-| Max | 309 |
-| Std | 55.9 |
+| Decision Tree | depth/leaf/split/features, `class_weight` | `max_depth=12, min_samples_split=40, min_samples_leaf=4, max_features='sqrt', class_weight=None` |
+| **XGBoost** | trees/shrinkage/depth/subsample/colsample/min_child/reg_λ/α/γ, `scale_pos_weight` | `n_estimators=800, learning_rate=0.2, max_depth=3, subsample=0.8, colsample_bytree=0.5, min_child_weight=2, reg_lambda=0.5, gamma=0.1, scale_pos_weight=2` |
+| KNN | `n_neighbors`, `weights`, `p` | `n_neighbors=11, weights='uniform', p=1` |
+| **MLP** | `hidden_layer_sizes`, `activation`, `alpha`, `learning_rate_init` | `hidden_layer_sizes=(64,64,32), activation='tanh', alpha=0.1, learning_rate_init=0.005` |
 
 ---
 
-## 3. End-to-end pipeline overview
+## 5. Benchmark results
 
-```
-Excel (two-row header)
-   │  load_database()  ── flatten section/field header, tidy text, drop empty cols
-   ▼
-Automatic column-role detection
-   ├─ detect_target_column()   → Ignition (Yes/No)   (requires a ~binary column)
-   ├─ detect_group_column()    → Article (MLA)
-   ├─ detect_leakage_columns() → drop post-ignition outcomes / notes / paper ids
-   └─ detect_feature_types()   → numeric vs categorical (unit-string aware)
-   ▼
-Shared preprocessing  (ColumnTransformer)
-   ├─ numeric:     median impute → StandardScaler
-   └─ categorical: most-frequent impute → OneHotEncoder(handle_unknown="ignore")
-   ▼
-Two evaluation splits
-   ├─ A: stratified random split   (baseline, interpolation)
-   └─ B: GroupShuffleSplit         (PRIMARY, extrapolation — no shared papers)
-   ▼
-Per model: RandomizedSearchCV with GroupKFold (ROC-AUC)  → best hyper-parameters
-   ▼
-Evaluate on BOTH splits → metrics, plots, per-paper analysis,
-                          feature/permutation/SHAP importance, comparison, saved models
-```
-
----
-
-## 4. Design choices and scientific reasoning
-
-### 4.1 Automatic, binary-aware target detection
-The database contains several "ignition"-named columns (`Ignition method`, `Ignition power (W)`,
-`Ignition time (s)`) that are **inputs**, not the outcome. Target detection therefore requires
-both a name match *and* that ≥ 80% of values map cleanly to a binary {0,1} encoding, which
-uniquely selects `Ignition (Yes/No)`.
-
-### 4.2 Leakage prevention — the critical difference from the FSR study
-For ignition, the **post-ignition outcomes** are the leak: `FSR (Flame Spread Rate)`,
-`Flame Length`, `HRR (Heat release rate)` and `Smoke/Aerosols` are all observed only *after*
-(and conditional on) ignition, so using them as predictors would be cheating. The script
-removes them, along with free-text notes (`Info`) and paper-identity fingerprints
-(`Authors`, `DOI`, `Article (MLA)`).
-
-| Removed column | Reason |
-|---|---|
-| `Ignition (Yes/No)` | the target (held out separately) |
-| `Article (MLA)` | grouping key (held out separately) |
-| `Authors`, `DOI` | paper-identity fingerprints — would let the model memorise papers |
-| `FSR (Flame Spread Rate)` | **post-ignition outcome (leakage)** |
-| `Flame Length` | post-ignition outcome (leakage) |
-| `HRR (Heat release rate)` | post-ignition outcome (leakage) |
-| `Smoke/ Areosols (yes/no)` | post-ignition outcome (leakage) |
-| `Info` | free-text notes |
-
-**Kept as valid predictors:** `Ignition method`, `Ignition power (W)`, `Ignition time (s)` —
-these describe the *stimulus applied*, which is known before the outcome is observed.
-
-### 4.3 Everything else mirrors the FSR study
-* **Automatic numeric/categorical detection** with unit-string parsing (`"94 W"`,
-  `"101.3 kPa"` → numeric).
-* **One shared preprocessing pipeline**: median impute + `StandardScaler` (numeric, essential
-  for KNN); most-frequent impute + `OneHotEncoder(handle_unknown="ignore")` (categorical, so
-  categories that appear only in unseen test papers do not crash inference).
-* **Two strategies**: (A) *stratified* random split — baseline/interpolation; (B)
-  `GroupShuffleSplit` by paper — primary/extrapolation, with an assertion guaranteeing no
-  shared papers. Realised split: **train = 4,047 rows (74 papers)**, **test = 1,046 rows
-  (19 papers)**, test prevalence 72.2% ignition.
-* **Tuning always via `GroupKFold`** with `scoring="roc_auc"` (threshold-independent and
-  robust to the class imbalance); random CV variants are deliberately not used.
-* The Decision Tree additionally tunes `class_weight ∈ {None, "balanced"}` to cope with the
-  imbalance; GB and KNN have no native class-weight knob, so we rely on ROC-AUC tuning and
-  report balanced metrics.
-
----
-
-## 5. Models and tuned hyper-parameters
-
-| Model | Search space (tuned) | Selected best hyper-parameters |
-|---|---|---|
-| Decision Tree | `max_depth`, `min_samples_split`, `min_samples_leaf`, `max_features`, `class_weight` | `max_depth=12, min_samples_split=40, min_samples_leaf=4, max_features='sqrt', class_weight=None` |
-| Gradient Boosting | `n_estimators`, `learning_rate`, `max_depth`, `subsample`, `min_samples_leaf` | `n_estimators=300, learning_rate=0.2, max_depth=4, subsample=0.9, min_samples_leaf=2` |
-| KNN | `n_neighbors`, `weights`, `p` | `n_neighbors=11, weights='uniform', p=1 (Manhattan)` |
-
----
-
-## 6. Metric definitions
-
-| Metric | Reading |
-|---|---|
-| **Accuracy** | fraction correct — *misleading under 76/24 imbalance* (majority guess ≈ 0.76) |
-| **Balanced Accuracy** | mean of per-class recall — robust to imbalance |
-| **Precision** | of predicted ignitions, how many truly ignited |
-| **Recall** | of true ignitions, how many were caught |
-| **F1** | harmonic mean of precision & recall |
-| **ROC-AUC** | threshold-independent ranking quality (0.5 = random) — primary tuning metric |
-| **PR-AUC** | average precision; the right summary under imbalance |
-| **MCC** | Matthews correlation; balanced single score (0 = no skill, <0 = anti-correlated) |
-
----
-
-## 7. Benchmark results
-
-### 7.1 Full comparison (both strategies, sorted by Group ROC-AUC)
+### 5.1 Full comparison (sorted by Group ROC-AUC)
 
 | Model | Strategy | Accuracy | Bal. Acc | Precision | Recall | F1 | ROC-AUC | PR-AUC | MCC |
 |---|---|---|---|---|---|---|---|---|---|
-| Gradient Boosting | **Group-Aware** | 0.730 | 0.612 | 0.777 | 0.880 | 0.825 | **0.723** | 0.851 | 0.259 |
-| Gradient Boosting | Random Split | 0.826 | 0.744 | 0.876 | 0.900 | 0.888 | 0.900 | 0.963 | 0.505 |
-| KNN | **Group-Aware** | 0.685 | 0.588 | 0.769 | 0.805 | 0.787 | 0.650 | 0.805 | 0.184 |
+| XGBoost | Group-Aware | 0.750 | 0.596 | 0.765 | 0.942 | 0.844 | **0.727** | 0.880 | 0.274 |
+| XGBoost | Random Split | 0.832 | 0.704 | 0.850 | 0.947 | 0.896 | 0.906 | 0.970 | 0.487 |
+| MLP | Group-Aware | 0.698 | 0.561 | 0.751 | 0.870 | 0.806 | 0.691 | 0.858 | 0.147 |
+| MLP | Random Split | 0.803 | 0.682 | 0.843 | 0.911 | 0.876 | 0.862 | 0.952 | 0.407 |
+| KNN | Group-Aware | 0.685 | 0.588 | 0.769 | 0.805 | 0.787 | 0.650 | 0.805 | 0.184 |
 | KNN | Random Split | 0.799 | 0.686 | 0.846 | 0.900 | 0.872 | 0.859 | 0.944 | 0.405 |
-| Decision Tree | **Group-Aware** | 0.655 | 0.474 | 0.710 | 0.882 | 0.787 | 0.472 | 0.726 | −0.077 |
+| Decision Tree | Group-Aware | 0.655 | 0.474 | 0.710 | 0.882 | 0.787 | 0.472 | 0.726 | −0.077 |
 | Decision Tree | Random Split | 0.777 | 0.608 | 0.808 | 0.929 | 0.864 | 0.792 | 0.920 | 0.280 |
 
 *(machine-readable: [`results/model_comparison.csv`](results/model_comparison.csv))*
 
-### 7.2 Generalization gap (the key scientific message)
-
-Gap is defined on ROC-AUC as **Random − Group** (higher AUC is better, so a large positive gap
-means paper-specific over-fitting):
+### 5.2 Generalization gap (Random − Group ROC-AUC)
 
 | Model | Random ROC-AUC | Group ROC-AUC | Generalization Gap |
 |---|---|---|---|
-| Gradient Boosting | 0.900 | 0.723 | **+0.177** |
-| KNN | 0.859 | 0.650 | **+0.208** |
+| MLP | 0.862 | 0.691 | +0.171 |
+| XGBoost | 0.906 | 0.727 | +0.179 |
+| KNN | 0.859 | 0.650 | +0.208 |
 | Decision Tree | 0.792 | 0.472 | **+0.321** |
 
 *(machine-readable: [`results/generalization_gap.csv`](results/generalization_gap.csv))*
 
-Every model looks far better under random splitting. The **Decision Tree** has the largest gap
-and collapses to **below-chance ranking (AUC 0.472, MCC −0.077)** on unseen papers — it has
-essentially memorised paper-specific patterns that do not transfer. **Gradient Boosting is the
-most robust**, retaining genuine discriminative skill (AUC 0.723, PR-AUC 0.851) out-of-sample.
+Every model looks far better under random splitting. The **Decision Tree** has
+the largest gap and collapses to **below-chance** ranking on unseen papers.
+**XGBoost** is the most robust, retaining genuine discriminative skill
+(AUC 0.727, PR-AUC 0.880) out-of-sample.
 
-> **Reading the accuracy numbers carefully:** GB's group accuracy (0.730) is barely above the
-> 0.722 majority-class baseline, but its **ROC-AUC 0.723 / PR-AUC 0.851 / MCC 0.259** show it
-> ranks ignition vs no-ignition meaningfully better than chance. This is precisely why we tune
-> and select on AUC rather than accuracy.
+> GB's/XGBoost's group accuracy (0.750) is only modestly above the 0.722 majority
+> baseline, but its ROC-AUC 0.727 / PR-AUC 0.880 / MCC 0.274 show it ranks
+> ignition vs no-ignition meaningfully better than chance — which is why we tune
+> and select on AUC, not accuracy.
 
 ---
 
-## 8. Model selection
-
-Selection is by the tuning criterion — **GroupKFold cross-validated ROC-AUC** on the training
-papers — not the random split:
+## 6. Model selection
 
 | Model | GroupKFold CV ROC-AUC | |
 |---|---|---|
-| **Gradient Boosting** | **0.685** | ← selected best |
+| **XGBoost** | **0.681** | ← selected best |
 | Decision Tree | 0.665 | |
+| MLP | 0.663 | |
 | KNN | 0.583 | |
 
-The CV ranking agrees with the held-out ranking that **Gradient Boosting is best**, so it is
-carried forward for permutation-importance and SHAP analysis.
+The CV ranking and the held-out ranking agree that **XGBoost is best**, so it is
+carried into permutation-importance and SHAP analysis.
 
 ---
 
-## 9. Per-model diagnostic figures (primary group/unseen-paper split)
+## 7. Per-model diagnostic figures (primary group/unseen-paper split)
 
-### 9.1 Gradient Boosting (selected best)
+### 7.1 XGBoost (selected best)
 | Confusion matrix | ROC curve | Precision-Recall |
 |---|---|---|
-| ![](results/confusion_matrix_gradient_boosting.png) | ![](results/roc_curve_gradient_boosting.png) | ![](results/pr_curve_gradient_boosting.png) |
+| ![](results/confusion_matrix_xgboost.png) | ![](results/roc_curve_xgboost.png) | ![](results/pr_curve_xgboost.png) |
 
-### 9.2 KNN
+### 7.2 MLP
+| Confusion matrix | ROC curve | Precision-Recall |
+|---|---|---|
+| ![](results/confusion_matrix_mlp.png) | ![](results/roc_curve_mlp.png) | ![](results/pr_curve_mlp.png) |
+
+### 7.3 KNN
 | Confusion matrix | ROC curve | Precision-Recall |
 |---|---|---|
 | ![](results/confusion_matrix_knn.png) | ![](results/roc_curve_knn.png) | ![](results/pr_curve_knn.png) |
 
-### 9.3 Decision Tree
+### 7.4 Decision Tree
 | Confusion matrix | ROC curve | Precision-Recall |
 |---|---|---|
 | ![](results/confusion_matrix_decision_tree.png) | ![](results/roc_curve_decision_tree.png) | ![](results/pr_curve_decision_tree.png) |
 
-All three models are biased toward predicting the majority "Ignition" class (high recall, lower
-specificity) — visible as the populated top row of each confusion matrix and the modest
-balanced accuracy.
+All models lean toward the majority "Ignition" class (high recall, lower
+specificity), visible in the populated top row of each confusion matrix and the
+modest balanced accuracy.
 
 ---
 
-## 10. Per-paper generalization analysis
+## 8. Per-paper generalization analysis
 
-Average metrics hide per-paper failures, so each held-out paper is scored separately.
-
-### 10.1 Gradient Boosting (best model)
+### 8.1 XGBoost (best model)
 | Per-paper accuracy & F1 | Per-paper ROC-AUC | Per-paper accuracy boxplot |
 |---|---|---|
-| ![](results/per_paper_acc_f1_hist_gradient_boosting.png) | ![](results/per_paper_auc_hist_gradient_boosting.png) | ![](results/per_paper_accuracy_boxplot_gradient_boosting.png) |
+| ![](results/per_paper_acc_f1_hist_xgboost.png) | ![](results/per_paper_auc_hist_xgboost.png) | ![](results/per_paper_accuracy_boxplot_xgboost.png) |
 
-Performance is highly heterogeneous across the 19 unseen test papers: some are classified almost
-perfectly while others (e.g. *Urban et al. 2025, "Solid Fuel Ignition Testing for Lunar
-Applications"*, per-paper AUC ≈ 0.31) are predicted worse than chance. Several papers contain
-only one class (all samples ignited or none did), so their per-paper ROC-AUC is undefined and is
-correctly omitted from the AUC histogram. This dispersion is invisible in the single aggregate
-number and is exactly what a reviewer needs before trusting the model on a new campaign.
+Performance is highly heterogeneous across the 19 unseen test papers: some are
+classified almost perfectly while others are predicted worse than chance. Papers
+with only one class present (all/none ignited) have undefined per-paper ROC-AUC
+and are omitted from that histogram.
 
-*(per-paper tables: [`results/per_paper_metrics_gradient_boosting.csv`](results/per_paper_metrics_gradient_boosting.csv),
-`per_paper_metrics_knn.csv`, `per_paper_metrics_decision_tree.csv`)*
+*(per-paper tables for all four models: `results/per_paper_metrics_*.csv`)*
 
-### 10.2 KNN and Decision Tree
-| KNN per-paper accuracy/F1 | Decision Tree per-paper accuracy/F1 |
+### 8.2 MLP and KNN
+| MLP per-paper accuracy/F1 | KNN per-paper accuracy/F1 |
 |---|---|
-| ![](results/per_paper_acc_f1_hist_knn.png) | ![](results/per_paper_acc_f1_hist_decision_tree.png) |
+| ![](results/per_paper_acc_f1_hist_mlp.png) | ![](results/per_paper_acc_f1_hist_knn.png) |
 
 ---
 
-## 11. Feature importance (Decision Tree & Gradient Boosting)
+## 9. Feature importance (Decision Tree & XGBoost)
 
-Top-20 impurity-based importances, names recovered after one-hot encoding.
-
-| Decision Tree | Gradient Boosting |
+| Decision Tree | XGBoost |
 |---|---|
-| ![](results/feature_importance_decision_tree.png) | ![](results/feature_importance_gradient_boosting.png) |
+| ![](results/feature_importance_decision_tree.png) | ![](results/feature_importance_xgboost.png) |
 
 *(CSVs: [`results/feature_importance_decision_tree.csv`](results/feature_importance_decision_tree.csv),
-[`results/feature_importance_gradient_boosting.csv`](results/feature_importance_gradient_boosting.csv))*
-
-Both models rank **Oxygen Concentration** and **Flow Velocity** at the top, with
-**Ignition time**, sample **Dimensions**, **Pressure** and **Gravity** also prominent —
-physically sensible, since ignition depends on oxidiser supply, convective cooling/transport
-and the energy/duration of the ignition stimulus.
+[`results/feature_importance_xgboost.csv`](results/feature_importance_xgboost.csv))*
 
 ---
 
-## 12. Permutation importance (best model: Gradient Boosting)
+## 10. Permutation importance (best model: XGBoost)
 
-Computed on the **held-out unseen papers** with ROC-AUC scoring, so it reflects what actually
-drives *extrapolation* performance (AUC lost when a feature is shuffled).
+Computed on the **held-out unseen papers** with ROC-AUC scoring.
 
 ![](results/permutation_importance.png)
 
 *(ranked table: [`results/permutation_importance.csv`](results/permutation_importance.csv))*
 
-**Oxygen Concentration dominates** (≈0.156 AUC drop when shuffled), an order of magnitude above
-the next features (Material, Ignition time, sample Dimensions, Pressure, Gravity, Flow
-velocity). A few features have slightly negative permutation importance, indicating reliance
-that does not transfer to these particular unseen papers.
+**Oxygen Concentration dominates** (≈0.19 AUC drop when shuffled), followed by
+Pressure, Material and sample Dimensions.
 
 ---
 
-## 13. SHAP analysis (best model: Gradient Boosting)
-
-SHAP values quantify each feature's signed contribution to the predicted **P(ignition)**
-(exact `TreeExplainer` on the post-preprocessing feature space).
+## 11. SHAP analysis (best model: XGBoost)
 
 | SHAP summary (beeswarm) | SHAP mean(\|value\|) bar |
 |---|---|
-| ![](results/shap_summary_gradient_boosting.png) | ![](results/shap_bar_gradient_boosting.png) |
+| ![](results/shap_summary_xgboost.png) | ![](results/shap_bar_xgboost.png) |
 
-*(ranked table: [`results/shap_ranking_gradient_boosting.csv`](results/shap_ranking_gradient_boosting.csv))*
+*(ranked table: [`results/shap_ranking_xgboost.csv`](results/shap_ranking_xgboost.csv))*
 
-**Top SHAP drivers of ignition:**
-
-1. **Oxygen Concentration** — by far the strongest driver (mean|SHAP| ≈ 1.39). Higher O₂ →
-   higher ignition probability, the central result of microgravity flammability research.
-2. **Flow Velocity** — convective oxidiser transport vs. flame cooling.
-3. **Ignition time** — longer stimulus exposure → more likely ignition.
-4. **Rig / facility terms** (e.g. `Rig Name=FLARE`) — systematic apparatus effects.
-5. **Sample dimensions, gravity, geometry (flat/wire), material** — fuel thermal inertia and
-   environment.
-
-**Physical interpretation:** the data-driven ranking matches combustion theory — ignition in
-microgravity is governed first by **oxidiser availability and transport** (O₂, flow, pressure),
-then by the **ignition stimulus** (time/power) and the **fuel's thermal/geometric properties**,
-with **gravity** modulating buoyant transport. The appearance of rig/facility terms again flags
-apparatus-specific signal, reinforcing why whole papers must be held out.
+**Top SHAP drivers of ignition:** Oxygen Concentration (mean|SHAP| ≈ 1.7) ≫ Flow
+Velocity, Pressure, Internal Dimensions, Gravity, Rig (FLARE), sample geometry
+(flat/wire) and the ignition stimulus (time). Physically, ignition in
+microgravity is governed first by **oxidiser availability and transport** (O₂,
+pressure, flow), then by the **ignition stimulus** and the **fuel's
+thermal/geometric properties**, with gravity modulating buoyant transport.
 
 ---
 
-## 14. Conclusions
+## 12. Conclusions
 
-1. **Ignition is predictable but extrapolation is hard.** The best model (Gradient Boosting)
-   reaches group-aware ROC-AUC 0.723 / PR-AUC 0.851 on unseen papers — useful, but well below
-   its random-split AUC of 0.900.
-2. **Gradient Boosting is the selected and most robust model**; KNN is moderate; the **Decision
-   Tree over-fits catastrophically** (group AUC 0.472 < 0.5, MCC < 0).
-3. **Generalization gaps of +0.18 to +0.32 AUC** prove that random-split metrics substantially
+1. **Ignition is predictable but extrapolation is hard.** XGBoost reaches
+   group-aware ROC-AUC 0.727 / PR-AUC 0.880 on unseen papers — useful, but well
+   below its random-split AUC of 0.906.
+2. **XGBoost is the selected and most robust model** (best on both CV and
+   holdout); MLP and KNN are moderate; the **Decision Tree over-fits
+   catastrophically** (group AUC 0.472, MCC < 0).
+3. **Generalization gaps of +0.17 to +0.32 AUC** prove random-split metrics
    overstate real-world ignition-prediction capability.
-4. **Oxygen concentration is the dominant, physically-consistent driver** across feature
-   importance, permutation importance and SHAP, followed by flow velocity and the ignition
-   stimulus.
-5. **Accuracy is the wrong headline metric** under this 76/24 imbalance; ROC-AUC, PR-AUC,
-   balanced accuracy and MCC tell the honest story and are used for tuning/selection.
+4. **Oxygen concentration is the dominant, physically-consistent driver** across
+   feature importance, permutation importance and SHAP.
+5. **Accuracy is the wrong headline metric** under the 76/24 imbalance; ROC-AUC,
+   PR-AUC, balanced accuracy and MCC are used for tuning/selection.
 
 ### Limitations & future work
-* First-number parsing of unit-laden columns is transparent but not unit-normalised.
-* Class imbalance could be tackled more aggressively (SMOTE, focal/weighted losses, calibrated
-  thresholds tuned per operating point).
-* Probability **calibration** (Platt/Isotonic) and decision-threshold selection would make the
-  predicted probabilities directly actionable for flammability screening.
-* Only 93 papers / 19 test papers → noisy holdout; leave-one-paper-out CV and more sources
-  would tighten estimates.
+* First-number parsing of unit-laden columns is transparent but not
+  unit-normalised.
+* Class imbalance could be tackled more aggressively (SMOTE, calibrated
+  thresholds); probability **calibration** would make outputs directly
+  actionable.
+* Only 93 papers / 19 test papers → noisy holdout; leave-one-paper-out CV and
+  more sources would tighten estimates.
 
 ---
 
-## 15. Reproducibility & how to run
+## 13. Reproducibility & how to run
 
 ```bash
-pip install pandas scikit-learn numpy matplotlib joblib openpyxl shap
-python "Ignition Regression/ignition_classification.py"            # full run (writes results/)
-python "Ignition Regression/ignition_classification.py" --no-shap  # skip the slower SHAP step
-python "Ignition Regression/ignition_classification.py" --n-iter 60 # wider hyper-parameter search
+pip install pandas scikit-learn numpy matplotlib joblib openpyxl shap xgboost
+python "ignition classifier/ignition_classification.py"            # full run
+python "ignition classifier/ignition_classification.py" --no-shap  # skip SHAP
 ```
 
 * `random_state = 42` for every split, search and model.
 * The script auto-locates `Microgravity_Database.xlsm` and writes all artefacts to
-  `Ignition Regression/results/` by default.
+  `ignition classifier/results/` by default.
 
 ### Files in this folder
 | File | Contents |
@@ -402,12 +303,12 @@ python "Ignition Regression/ignition_classification.py" --n-iter 60 # wider hype
 | `ignition_classification.py` | the complete, commented, runnable script |
 | `REPORT.md` | this report |
 | `run_log.txt` | full console output of the benchmarked run |
-| `results/model_comparison.csv` | metrics for all models × both strategies |
+| `results/model_comparison.csv` | metrics for all 4 models × both strategies |
 | `results/generalization_gap.csv` | random vs group ROC-AUC + gap |
-| `results/metrics.json` | machine-readable summary (sizes, balance, features, params, scores) |
+| `results/metrics.json` | machine-readable summary |
 | `results/confusion_matrix_*.png`, `roc_curve_*.png`, `pr_curve_*.png` | per-model diagnostics |
 | `results/per_paper_*` | per-paper extrapolation analysis (CSV + plots) |
-| `results/feature_importance_*` | Decision Tree & Gradient Boosting importances |
+| `results/feature_importance_*` | Decision Tree & XGBoost importances |
 | `results/permutation_importance.*` | best-model permutation importance |
 | `results/shap_summary_*`, `shap_bar_*`, `shap_ranking_*` | best-model SHAP analysis |
-| `results/best_decision_tree.joblib`, `best_gradient_boosting.joblib`, `best_knn.joblib` | saved fitted pipelines |
+| `results/best_decision_tree.joblib`, `best_xgboost.joblib`, `best_knn.joblib`, `best_mlp.joblib` | saved fitted pipelines |

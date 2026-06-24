@@ -1,0 +1,5 @@
+Model,Random RMSE,Group RMSE,Generalization Gap
+MLP,11.1299,10.6426,-0.4873
+KNN,8.3368,11.0472,2.7104
+XGBoost,13.0586,13.0752,0.0166
+Decision Tree,15.9707,15.2409,-0.7298
