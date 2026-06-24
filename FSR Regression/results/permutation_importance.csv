@@ -1,15 +1,15 @@
 feature,importance_mean,importance_std
-Oxygen Concentration,4.169172191491107,0.2304138484549341
-Ignition time (s),0.6986800458051107,0.06417553235471471
-"Dimensions of sample (Wire is in diameter, Cylindrical is in length x radius x thickness, Rectangle is in length x width x height, Shperical)",0.49043377537508714,0.12847729233246097
-Flow Velocity (Co flow is + and counter flow is -),0.3326357081072867,0.052707995545050366
-Material of sample,0.22545164444428972,0.019804186659519912
-"Internal geometry (Cylindrical , rectangular)",0.13599124652565334,0.021854551256266615
-Rig Name,0.12381988628313234,0.40994479936655304
-Gravity (g/gearth),0.10168511397530207,0.0755697616628393
-Internal Dimensions,0.05515431789024241,0.162213290157064
-"Ignition method (Wire, open flame, or Radiative Heater",0.0,0.0
+Oxygen Concentration,6.575907196356388,0.324110587022625
+"Dimensions of sample (Wire is in diameter, Cylindrical is in length x radius x thickness, Rectangle is in length x width x height, Shperical)",0.33865372071096456,0.08236599261937186
+Rig Name,0.15717813056053204,0.2011066293521107
+"Expireimental facility (Parabolic Aircraft, Drop Tower, Spacecraft, Sounding Rocket, Ground)",0.05306055555100819,0.004298318626348328
+"Geometry of Sample (flat, wire, or Cylindrical)",0.023269627041777242,0.002719040695229308
+Material of sample,0.0041250892507214585,0.0004391479848169725
+Flow Velocity (Co flow is + and counter flow is -),0.00012509094328354563,0.00011807086267234414
 Ignition power (W),0.0,0.0
-"Geometry of Sample (flat, wire, or Cylindrical)",-0.05580615442521726,0.03031105333043835
-"Expireimental facility (Parabolic Aircraft, Drop Tower, Spacecraft, Sounding Rocket, Ground)",-0.08958240638962689,0.026444867521421455
-Pressure,-0.7277562342252611,0.08529690064811306
+"Ignition method (Wire, open flame, or Radiative Heater",0.0,0.0
+Ignition time (s),0.0,0.0
+Gravity (g/gearth),-0.0019242894686504642,0.0005407815417842739
+"Internal geometry (Cylindrical , rectangular)",-0.0030345130900890638,0.001429845150210191
+Internal Dimensions,-0.1014818587688957,0.014256258936385973
+Pressure,-0.8481430492785833,0.2769666912368309

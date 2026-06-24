@@ -1,22 +1,22 @@
-feature,importance
-Oxygen Concentration,0.4295595057080392
-Rig Name_NASA Glenn Research Center’s Zero Gravity Research Facility,0.2459737553422683
-Pressure,0.2018119251376695
-"Dimensions of sample (Wire is in diameter, Cylindrical is in length x radius x thickness, Rectangle is in length x width x height, Shperical)",0.07123150108284626
-Rig Name_MGLAB,0.015599834542635006
-Internal Dimensions,0.009710612495788232
-Flow Velocity (Co flow is + and counter flow is -),0.00811214637904327
-Gravity (g/gearth),0.0046354454378532755
-Material of sample_Whatman 44 filter paper,0.004165863074141276
-"Expireimental facility (Parabolic Aircraft, Drop Tower, Spacecraft, Sounding Rocket, Ground)_Spacecraft",0.0034915041792881007
-Ignition power (W),0.0024633280441885034
-"Geometry of Sample (flat, wire, or Cylindrical)_Wire",0.0013985631496021972
-Material of sample_Kimwipes,0.0011721756057775131
-"Internal geometry (Cylindrical , rectangular)_Cylindrical",0.00033644286750874925
-Material of sample_NiCr core; LDPE outer,0.0001733209106117945
-Rig Name_NASA Glenn Research Center,0.00011838314468458187
-Material of sample_Cu core; LDPE outer,3.113523861278046e-05
-"Expireimental facility (Parabolic Aircraft, Drop Tower, Spacecraft, Sounding Rocket, Ground)_Parabolic Aircraft",1.4557659441522513e-05
+feature,mean_abs_shap
+Oxygen Concentration,5.111187720206182
+"Dimensions of sample (Wire is in diameter, Cylindrical is in length x radius x thickness, Rectangle is in length x width x height, Shperical)",2.2010051881919437
+Pressure,1.5174691994128022
+Rig Name_NASA Glenn Research Center’s Zero Gravity Research Facility,1.3568549704897053
+Rig Name_MGLAB,1.151256184257453
+Internal Dimensions,0.9798207207571132
+"Geometry of Sample (flat, wire, or Cylindrical)_Wire",0.45246463493725675
+"Expireimental facility (Parabolic Aircraft, Drop Tower, Spacecraft, Sounding Rocket, Ground)_Spacecraft",0.2681232687578282
+Flow Velocity (Co flow is + and counter flow is -),0.1776671450316923
+Material of sample_Whatman 44 filter paper,0.12780898055023532
+Material of sample_NiCr core; LDPE outer,0.088557101896132
+Rig Name_NASA Glenn Research Center,0.086692836342667
+Ignition power (W),0.08613443980625929
+Gravity (g/gearth),0.07306707908305697
+"Internal geometry (Cylindrical , rectangular)_Cylindrical",0.06254097500912041
+Material of sample_Kimwipes,0.04952626869138777
+Material of sample_Cu core; LDPE outer,0.017847809056541826
+"Expireimental facility (Parabolic Aircraft, Drop Tower, Spacecraft, Sounding Rocket, Ground)_Parabolic Aircraft",0.017417280437833912
 "Geometry of Sample (flat, wire, or Cylindrical)_Flat",0.0
 "Geometry of Sample (flat, wire, or Cylindrical)_Cylindrical",0.0
 "Geometry of Sample (flat, wire, or Cylindrical)_wire",0.0

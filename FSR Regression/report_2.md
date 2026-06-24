@@ -1,5 +1,5 @@
 # Predicting Flame Spread Rate (FSR) in Microgravity Combustion
-### A paper-aware (extrapolation-first) machine-learning study, with bootstrap data augmentation
+### Report 2: paper-aware audit, model comparison, and bootstrap augmentation
 
 **Models compared:** Decision Tree · **XGBoost** · K-Nearest Neighbors · **MLP** (neural network)
 **Target:** Flame Spread Rate (FSR)
@@ -7,10 +7,11 @@
 **Code:** [`fsr_extrapolation_regression.py`](fsr_extrapolation_regression.py)
 **Reproducibility:** `random_state = 42` everywhere; full console log in [`run_log.txt`](run_log.txt)
 
-> **What changed in this revision**
-> 1. The Gradient Boosting model has been **replaced by XGBoost**.
-> 2. A fourth model, a **Multi-Layer Perceptron (MLP)** neural network, has been added.
-> 3. **Bootstrap resampling (BT)** data augmentation has been added, following the founding paper of this work (see §0 and §12).
+> **Audit methodology**
+> 1. Keep all rows from the same paper together in either train or test.
+> 2. Tune hyper-parameters with `GroupKFold` on training papers only.
+> 3. Compare the paper-aware held-out split against a random split as a leakage check.
+> 4. Evaluate bootstrap augmentation using training-only resampling, never touching the held-out papers.
 
 ---
 
@@ -29,8 +30,8 @@ That paper compiles a literature FSR dataset, trains non-linear ML models
 tree- and neighbourhood-based models, pushing R² above 0.9 under random
 cross-validation. We adopt its model families (with **XGBoost** standing in for
 the paper's Gradient Boosting) and its **bootstrap augmentation** recipe, but we
-add a stricter, **paper-aware extrapolation** evaluation that the paper itself
-flags as the harder, more honest test of transferability to unseen sources.
+add a stricter, **paper-aware extrapolation** evaluation that treats unseen
+papers as the real test.
 
 ---
 
@@ -41,31 +42,27 @@ Rate (FSR)** under a paper-aware protocol: because the database aggregates many
 correlated rows per paper, all rows of a paper are kept entirely in train **or**
 test (never split), so we measure prediction on **completely unseen papers**.
 
-**Headline result (primary, group-aware / unseen papers, raw data "RD"):**
-
-On the held-out unseen papers, **MLP has the best RMSE and the highest R²**.
-On GroupKFold cross-validation, **Decision Tree is the best CV-selected model**.
+**Held-out paper-aware result (primary RD split):**
 
 | Model | R² | RMSE | MAE | NRMSE |
 |---|---|---|---|---|
-| MLP | 0.553 | **10.64** | 5.84 | 1.85 |
+| MLP | **0.553** | **10.64** | 5.84 | **1.85** |
 | KNN | 0.519 | 11.05 | 5.62 | 1.92 |
 | XGBoost | 0.326 | 13.08 | 6.41 | 2.27 |
 | Decision Tree | 0.084 | 15.24 | 7.40 | 2.64 |
 
-**Best CV-selected model by the tuning criterion (GroupKFold CV RMSE): Decision Tree**
-(CV RMSE = 12.94, the lowest of the four). Note the distinction between the
-best held-out paper-aware score (**MLP**) and the best cross-validated model
-(**Decision Tree**) — with only 14 test papers, the single holdout is noisy, so
-selection is anchored to the more stable 5-fold grouped CV (see §8 and §11).
+**Cross-validation selection (training papers only):** Decision Tree has the
+lowest GroupKFold CV RMSE (12.94), so it is the **CV-selected model** for the
+permutation-importance and SHAP analyses.
 
-**Bootstrap augmentation (RD+BT):** consistent with the founding paper, BT helps
-the tree- and neighbourhood-based models — **Decision Tree** (group RMSE 15.24 →
-14.96, Δ = −0.28) and **KNN** (11.05 → 11.00) — while it does **not** help
-XGBoost or the MLP under extrapolation (see §12).
+**Bootstrap augmentation (RD+BT):** bootstrap helps the tree- and
+neighbourhood-based models in this run — **Decision Tree** improves from 15.24
+→ 14.96 and **KNN** from 11.05 → 11.00 — while it does **not** help XGBoost or
+MLP under extrapolation.
 
-The **generalization gap** (group − random RMSE) remains large for the tree and
-neighbour models, confirming that random-split numbers are over-optimistic.
+The **generalization gap** (group − random RMSE) is large for KNN and remains a
+useful warning that random splits can be overly optimistic when paper-level
+correlation is present.
 
 ---
 
@@ -162,7 +159,7 @@ The selected CV model carried into permutation-importance and SHAP is therefore
 
 ## 6. Per-model diagnostic figures (primary group/unseen-paper split, RD)
 
-### 6.1 Decision Tree (CV-selected model)
+### 6.1 Decision Tree
 | Predicted vs Experimental | Residuals | Error histogram |
 |---|---|---|
 | ![](results/pred_vs_true_decision_tree.png) | ![](results/residuals_decision_tree.png) | ![](results/error_hist_decision_tree.png) |
@@ -189,7 +186,7 @@ The selected CV model carried into permutation-importance and SHAP is therefore
 Average metrics can hide catastrophic failure on individual papers, so each
 held-out paper is scored separately.
 
-### 7.1 Decision Tree (CV-selected model)
+### 7.1 Decision Tree
 | Per-paper RMSE & MAE | Per-paper R² | Per-paper RMSE boxplot |
 |---|---|---|
 | ![](results/per_paper_rmse_mae_hist_decision_tree.png) | ![](results/per_paper_r2_hist_decision_tree.png) | ![](results/per_paper_rmse_boxplot_decision_tree.png) |
@@ -251,7 +248,7 @@ velocity, Material).
 
 ## 11. SHAP analysis (CV-selected model: Decision Tree)
 
-| SHAP summary (beeswarm) | SHAP mean(\|value\|) bar |
+| SHAP summary (beeswarm) | SHAP mean(|value|) bar |
 |---|---|
 | ![](results/shap_summary_decision_tree.png) | ![](results/shap_bar_decision_tree.png) |
 
@@ -352,7 +349,7 @@ python "FSR Regression/fsr_extrapolation_regression.py" --bootstrap-n 0 # disabl
 | File | Contents |
 |---|---|
 | `fsr_extrapolation_regression.py` | the complete, commented, runnable script |
-| `REPORT.md` | this report |
+| `report_2.md` | this report |
 | `run_log.txt` | full console output of the benchmarked run |
 | `results/model_comparison.csv` | metrics for all 4 models × 4 conditions (RD/RD+BT × random/group) |
 | `results/generalization_gap.csv` | random vs group RMSE + gap |
