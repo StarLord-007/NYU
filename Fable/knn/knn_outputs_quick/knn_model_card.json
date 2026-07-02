@@ -1,0 +1,41 @@
+{
+  "config": {
+    "feature_set": "all",
+    "paper_weight": "sqrt",
+    "class_weight": "balanced",
+    "random_state": 42,
+    "params": {
+      "metric": "euclidean",
+      "n_neighbors": 5,
+      "weights": "uniform"
+    }
+  },
+  "n_rows": 4443,
+  "n_papers": 85,
+  "benchmark_summary": {
+    "baseline": {
+      "group_roc_auc": 0.6042936420267871,
+      "group_roc_auc_std": 0.07078528180392106,
+      "pr_auc": 0.7996684792567554,
+      "pr_auc_std": 0.05300928031131189,
+      "mcc": 0.10827140001773883,
+      "mcc_std": 0.15063106035445611,
+      "f1": 0.8462772310346022,
+      "f1_std": 0.012463603081348612,
+      "balanced_accuracy": 0.5723293960386382,
+      "balanced_accuracy_std": 0.10152887861344387
+    },
+    "group-tuned": {
+      "group_roc_auc": 0.5793920538307124,
+      "group_roc_auc_std": 0.06435228249593443,
+      "pr_auc": 0.7812801118304173,
+      "pr_auc_std": 0.04302547807685308,
+      "mcc": 0.10500991661929893,
+      "mcc_std": 0.06347171752472754,
+      "f1": 0.8536406359403734,
+      "f1_std": 0.016005243471604126,
+      "balanced_accuracy": 0.5706547721578337,
+      "balanced_accuracy_std": 0.060511858511970704
+    }
+  }
+}

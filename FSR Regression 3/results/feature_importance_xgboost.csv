@@ -1,0 +1,98 @@
+feature,importance
+Rig Name_NASA Glenn Research Center,0.11619372
+Material of sample_TENGU paper; area density 0.2 mg/cm²,0.09331735
+Material of sample_Silkspan type 00; Manila hemp and cellulosic fibers,0.091778986
+Material of sample_TENGU paper; area density 0.5 mg/cm²,0.08909613
+Rig Name_NASA Glenn Research Center’s Zero Gravity Research Facility,0.0622971
+Material of sample_Cellulosic tSpacecraftue,0.060719036
+Material of sample_Kimwipes,0.05258418
+Material of sample_TENGU paper; area density 0.2 mg/cm1,0.044865996
+Oxygen Concentration,0.04195927
+Internal Dimensions,0.030144157
+Material of sample_White bond paper type 115; 25% rag,0.02525173
+"Dimensions of sample (Wire is in diameter, Cylindrical is in length x radius x thickness, Rectangle is in length x width x height, Shperical)",0.024213636
+Rig Name_NASA Glenn Zero Gravity Facility,0.023270309
+Ignition time (s),0.01794626
+Rig Name_NASA Zero Gravity Facility,0.017206999
+Material of sample_Cellulose acetate sheet; MIL SPEC LP-504,0.016446456
+Pressure,0.015136635
+Material of sample_Cellulosic paper (Kimwipes),0.014469649
+"Geometry of Sample (flat, wire, or Cylindrical)_Cylindrical",0.013562848
+Flow Velocity (Co flow is + and counter flow is -),0.013490211
+Rig Name_NCCRD IIT Madras combustion duct,0.011035236
+"Expireimental facility (Parabolic Aircraft, Drop Tower, Spacecraft, Sounding Rocket, Ground)_Ground",0.011011519
+Material of sample_Cellulose acetate sheet; MIL-SPEC LP-504,0.010922449
+"Geometry of Sample (flat, wire, or Cylindrical)_flat",0.009269968
+"Geometry of Sample (flat, wire, or Cylindrical)_Flat",0.009100505
+"Internal geometry (Cylindrical , rectangular)_Rectangular",0.008169999
+"Expireimental facility (Parabolic Aircraft, Drop Tower, Spacecraft, Sounding Rocket, Ground)_Drop Tower",0.0080734035
+Gravity (g/gearth),0.0073428964
+"Internal geometry (Cylindrical , rectangular)_Cylindrical",0.0072632795
+"Ignition method (Wire, open flame, or Radiative Heater_Wire",0.006355931
+Material of sample_Cellulose acetate plastic shim stock; Fed. Spec. LP504,0.00512302
+Rig Name_MGLAB,0.0050420286
+Material of sample_Cu core; LDPE outer,0.004578073
+"Internal geometry (Cylindrical , rectangular)_Hemispherical",0.0043937652
+"Expireimental facility (Parabolic Aircraft, Drop Tower, Spacecraft, Sounding Rocket, Ground)_Parabolic Aircraft",0.0042847847
+Material of sample_PMMA,0.0035444698
+Ignition power (W),0.0028032544
+Material of sample_High-density polyethylene (HDPE),0.0024490487
+Rig Name_NASA LeRC,0.0024383313
+Rig Name_GIFFTS,0.0023999985
+Material of sample_Neoprene,0.0020382844
+"Geometry of Sample (flat, wire, or Cylindrical)_Wire",0.0019795836
+Rig Name_BASS,0.0013007591
+Rig Name_JAMIC dropshaft,0.0012041887
+Rig Name_SJ-10 satellite,0.0011626938
+Material of sample_NiCr core; LDPE outer,0.000900112
+Material of sample_Silicone,0.00078427297
+Material of sample_NiCr core; ETFE outer,0.00071060745
+Material of sample_Dacron-wrapped polyurethane,0.00020120379
+Material of sample_Polyurethane,0.00016565592
+Material of sample_HDPE,0.0
+Material of sample_Cu core; black LDPE outer,0.0
+Material of sample_Extruded PMMA,0.0
+Material of sample_LDPE,0.0
+Material of sample_Cellulosic strand,0.0
+Material of sample_Cu core; ETFE outer,0.0
+Material of sample_Cast PMMA,0.0
+Material of sample_Bleached cheesecloth; area density 13.14 mg/c,0.0
+Material of sample_Bleached cheesecloth; area density 2.0 mg/cm²,0.0
+Material of sample_Bleached cheesecloth; area density 4.38 mg/cm,0.0
+"Geometry of Sample (flat, wire, or Cylindrical)_wire",0.0
+Material of sample_Cotton,0.0
+Material of sample_TENGU paper; area density 0.35 mg/cm,0.0
+Material of sample_TENGU paper; area density 0.9 mg/cm²,0.0
+Material of sample_Polydimethylsiloxane (PDMS),0.0
+Rig Name_JAMIC,0.0
+Rig Name_FLARE,0.0
+Rig Name_Fire Research Device (FReD),0.0
+Rig Name_Forced Flow Flame Spreading Test (FFFT) module,0.0
+Rig Name_External-radiation wire flammability chamber,0.0
+Rig Name_Bremen Drop Tower,0.0
+Rig Name_DARTFire,0.0
+Rig Name_DIAMONDS,0.0
+Rig Name_0 wind tunnel / HOI test apparatus,0.0
+Material of sample_Whatman 44 filter paper,0.0
+Rig Name_BASS-II,0.0
+Material of sample_Polyethylene,0.0
+Material of sample_SIBAL,0.0
+Material of sample_SS inner; LDPE outer,0.0
+Rig Name_NASA Narrow Channel Apparatus,0.0
+Rig Name_NASA KC-135,0.0
+Rig Name_Saffire V,0.0
+Rig Name_Saffire IV,0.0
+Rig Name_Saffire III,0.0
+Rig Name_Saffire II,0.0
+Rig Name_Saffire I,0.0
+Rig Name_Saffire,0.0
+Rig Name_RITSI,0.0
+Rig Name_TEXUS 57,0.0
+"Expireimental facility (Parabolic Aircraft, Drop Tower, Spacecraft, Sounding Rocket, Ground)_Centrifuge",0.0
+Rig Name_TEM-SEN 3,0.0
+"Expireimental facility (Parabolic Aircraft, Drop Tower, Spacecraft, Sounding Rocket, Ground)_Spacecraft",0.0
+"Expireimental facility (Parabolic Aircraft, Drop Tower, Spacecraft, Sounding Rocket, Ground)_Sounding Rocket",0.0
+"Ignition method (Wire, open flame, or Radiative Heater_Open Flame",0.0
+"Ignition method (Wire, open flame, or Radiative Heater_Open flame",0.0
+"Ignition method (Wire, open flame, or Radiative Heater_Radiative Heater",0.0
+"Ignition method (Wire, open flame, or Radiative Heater_open flame",0.0

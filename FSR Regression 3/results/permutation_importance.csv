@@ -1,0 +1,15 @@
+feature,importance_mean,importance_std
+Oxygen Concentration,2.8134867884181043,0.16188311787980825
+"Internal geometry (Cylindrical , rectangular)",1.4408580399589763,0.4785851514484515
+Rig Name,1.2757420014106786,0.3415631994791886
+Ignition time (s),0.7182275185903781,0.07927726671007222
+"Expireimental facility (Parabolic Aircraft, Drop Tower, Spacecraft, Sounding Rocket, Ground)",0.6377920195593623,0.30519883375443113
+Gravity (g/gearth),0.4856042671165305,0.15126963617624362
+Flow Velocity (Co flow is + and counter flow is -),0.19432256328192493,0.06281800356597297
+Material of sample,0.1883977865022743,0.11068271297403039
+Internal Dimensions,0.17068054161231458,0.243496803938523
+"Geometry of Sample (flat, wire, or Cylindrical)",0.12123706698525823,0.09771818589918463
+"Ignition method (Wire, open flame, or Radiative Heater",0.08612385960753048,0.05288913672072938
+"Dimensions of sample (Wire is in diameter, Cylindrical is in length x radius x thickness, Rectangle is in length x width x height, Shperical)",0.03227666403588216,0.26817629355439665
+Ignition power (W),0.013905891009076932,0.02003604766315223
+Pressure,-0.005207528538341144,0.03505019326523106

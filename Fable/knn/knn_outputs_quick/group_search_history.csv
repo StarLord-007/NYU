@@ -1,0 +1,2 @@
+metric,n_neighbors,weights,group_roc_auc,std
+euclidean,5,uniform,0.5793920538307124,0.057558431267271636

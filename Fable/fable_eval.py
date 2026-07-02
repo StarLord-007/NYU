@@ -38,6 +38,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from typing import Callable
 
 import numpy as np
 import pandas as pd
@@ -381,7 +382,11 @@ def protocol_comparison(df: pd.DataFrame, cfg: FableConfig, out_dir: Path) -> pd
 # ---------------------------------------------------------------------------
 
 def lopo_head_to_head(
-    df: pd.DataFrame, cfg_a: FableConfig, cfg_b: FableConfig, names: tuple[str, str], out_dir: Path
+    df: pd.DataFrame,
+    model_factory_a: Callable[[], FableModel],
+    model_factory_b: Callable[[], FableModel],
+    names: tuple[str, str],
+    out_dir: Path,
 ) -> pd.DataFrame:
     X = df
     y = df["ignition_binary"].to_numpy()
@@ -396,8 +401,8 @@ def lopo_head_to_head(
             "n_rows": int(mask.sum()),
             "ignition_rate": float(y[mask].mean()),
         }
-        for cfg, nm in zip((cfg_a, cfg_b), names):
-            m = FableModel(cfg)
+        for factory, nm in zip((model_factory_a, model_factory_b), names):
+            m = factory()
             m.fit(X.iloc[~mask], y[~mask], papers[~mask])
             p = m.predict_proba(X.iloc[mask])
             oof[nm][mask] = p
@@ -550,10 +555,12 @@ def main() -> None:
     if not (args.quick or args.skip_lopo):
         print("\nLOPO head-to-head: baseline vs fable ...")
         best_name = "fable (= above + monotone O2)"
+        baseline_factory = lambda cfg=methods["baseline (spw, v2 config)"]: FableModel(cfg)
+        best_factory = lambda cfg=methods[best_name]: FableModel(cfg)
         lopo = lopo_head_to_head(
             df,
-            methods["baseline (spw, v2 config)"],
-            methods[best_name],
+            baseline_factory,
+            best_factory,
             ("baseline", "fable"),
             out_dir,
         )

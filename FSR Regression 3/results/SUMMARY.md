@@ -1,0 +1,79 @@
+# FSR Extrapolation Regression -- Repeated-Benchmark Summary
+
+- Random state: **42**
+- Number of train/test repeats: **10**
+- Rows (initial / after target cleaning): **5118 / 2605**
+- Unique papers / groups: **69**
+- Target column: `FSR (Flame Spread Rate)`
+- Bootstrap rows added per train split: **1000**
+- Best model (lowest mean GroupKFold CV RMSE): **KNN**
+
+## Mean GroupKFold CV RMSE (lower is better)
+
+```
+        Model  Group CV RMSE_mean  Group CV RMSE_std
+          KNN             12.8701             0.9786
+      XGBoost             13.0822             1.1927
+Decision Tree             13.8614             1.2543
+          MLP             14.5451             1.1295
+```
+
+## Model comparison -- mean +/- std across repeats (4 conditions)
+
+```
+        Model  Validation Strategy  R2_mean  R2_std  RMSE_mean  RMSE_std  MAE_mean  MAE_std  MAPE_mean  MAPE_std  NRMSE_mean  NRMSE_std  MBE_mean  MBE_std
+          KNN     Group-Aware (RD)   0.4356  0.1032    12.1682    2.8911    5.8849   1.5833   364.0765  227.7603      1.4227     0.2473   -0.5928   1.5285
+          KNN  Group-Aware (RD+BT)   0.4567  0.1025    11.9451    2.8720    5.8904   1.5103   352.6456  210.4073      1.3966     0.2538   -0.5271   1.7019
+          KNN    Random Split (RD)   0.7310  0.0989     8.7478    2.2514    3.3683   0.6822   158.2923   52.3614      1.0025     0.2034   -0.2199   0.4972
+          KNN Random Split (RD+BT)   0.7328  0.0886     8.7223    2.0958    3.3175   0.5924   143.4098   43.2568      1.0001     0.1874   -0.1636   0.4657
+      XGBoost     Group-Aware (RD)   0.3391  0.1773    13.3008    3.8673    6.6837   1.2740   665.4527  203.3548      1.5588     0.4216    0.0402   1.2923
+      XGBoost  Group-Aware (RD+BT)   0.3217  0.1940    13.4055    3.7083    6.6942   1.0638   691.2742  223.4920      1.5772     0.4293    0.0854   1.4743
+      XGBoost    Random Split (RD)   0.7131  0.0775     9.0480    1.9066    4.2749   0.8670   700.5148  401.8141      1.0397     0.1724   -0.1137   0.5161
+      XGBoost Random Split (RD+BT)   0.7238  0.0856     8.8841    2.0889    4.2292   0.8933   696.7471  416.4654      1.0194     0.1895   -0.0260   0.5411
+          MLP     Group-Aware (RD)   0.2697  0.2270    13.7855    3.8045    7.2598   1.4952   880.0756  682.8839      1.6210     0.4273    0.1027   1.7534
+          MLP  Group-Aware (RD+BT)   0.0862  0.2912    15.2018    2.9057    7.7813   1.0975   749.3334  493.9149      1.7911     0.3436   -0.0937   1.9619
+          MLP    Random Split (RD)   0.7763  0.0571     7.9991    1.6647    3.2061   0.3618   228.2046   69.8145      0.9188     0.1502   -0.2768   0.7866
+          MLP Random Split (RD+BT)   0.8011  0.0270     7.5256    0.8417    3.0488   0.2434   210.9872   77.1965      0.8674     0.0684   -0.1107   0.5671
+Decision Tree     Group-Aware (RD)   0.2311  0.2596    14.2620    4.2978    6.5600   1.4210   594.9411  346.3676      1.6648     0.4267   -1.3095   1.8513
+Decision Tree  Group-Aware (RD+BT)   0.0815  0.2872    15.5268    4.3369    7.3722   1.9088   807.8927  606.2834      1.8206     0.4501   -0.3069   3.1268
+Decision Tree    Random Split (RD)   0.5969  0.1436    10.5351    1.7306    4.5396   0.7009   583.9661  339.5816      1.2168     0.1931   -0.0801   0.6543
+Decision Tree Random Split (RD+BT)   0.6419  0.1014    10.0357    1.7515    4.2859   0.7475   545.0546  376.4661      1.1557     0.1729   -0.1619   0.7300
+```
+
+## Generalization gap (Group RMSE - Random RMSE)
+
+```
+        Model  Random RMSE_mean  Random RMSE_std  Group RMSE_mean  Group RMSE_std  Generalization Gap_mean  Generalization Gap_std
+          KNN            8.7478           2.2514          12.1682          2.8911                   3.4205                  2.1744
+      XGBoost            9.0480           1.9066          13.3008          3.8673                   4.2529                  4.0324
+          MLP            7.9991           1.6647          13.7855          3.8045                   5.7864                  4.1873
+Decision Tree           10.5351           1.7306          14.2620          4.2978                   3.7269                  4.2152
+```
+
+## Bootstrap augmentation effect (negative dRMSE = BT helps)
+
+```
+        Model  Group RMSE (RD)_mean  Group RMSE (RD)_std  Group RMSE (RD+BT)_mean  Group RMSE (RD+BT)_std  Group dRMSE (BT-RD)_mean  Group dRMSE (BT-RD)_std  Random RMSE (RD)_mean  Random RMSE (RD)_std  Random RMSE (RD+BT)_mean  Random RMSE (RD+BT)_std  Random dRMSE (BT-RD)_mean  Random dRMSE (BT-RD)_std
+          KNN               12.1682               2.8911                  11.9451                  2.8720                   -0.2232                   0.3979                 8.7478                2.2514                    8.7223                   2.0958                    -0.0254                    0.2690
+      XGBoost               13.3008               3.8673                  13.4055                  3.7083                    0.1047                   0.5664                 9.0480                1.9066                    8.8841                   2.0889                    -0.1639                    0.3464
+          MLP               13.7855               3.8045                  15.2018                  2.9057                    1.4163                   2.5787                 7.9991                1.6647                    7.5256                   0.8417                    -0.4735                    1.0501
+Decision Tree               14.2620               4.2978                  15.5268                  4.3369                    1.2647                   2.1677                10.5351                1.7306                   10.0357                   1.7515                    -0.4994                    1.1571
+```
+
+## Output files (all under `results/`)
+
+- `model_comparison.csv` -- headline mean +/- std table (PRIMARY).
+- `model_comparison_repeats.csv` -- one row per (repeat, model, strategy).
+- `generalization_gap.csv` / `generalization_gap_repeats.csv`
+- `augmentation_comparison.csv` / `augmentation_comparison_repeats.csv`
+- `best_params_repeats.csv` -- tuned hyper-parameters per repeat.
+- `predictions/` -- per-repeat y_true / y_pred CSVs for every model x strategy.
+- `model_comparison_bars.png` -- mean +/- std RMSE per model (4 strategies).
+- `per_repeat_group_rmse_strip.png` -- run-to-run variability for Group-Aware RD.
+- `pred_vs_true_*.png`, `residuals_*.png`, `error_hist_*.png` (representative repeat).
+- `per_paper_*` -- per-paper extrapolation analysis (representative repeat).
+- `feature_importance_*` -- Decision Tree & XGBoost.
+- `permutation_importance.*` -- best repeated-benchmark model.
+- `shap_summary_*` / `shap_bar_*` -- best model (unless --no-shap).
+- `metrics.json` -- machine-readable bundle.
+- `best_*.joblib` -- best representative pipelines per model.
