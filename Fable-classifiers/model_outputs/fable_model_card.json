@@ -1,0 +1,49 @@
+{
+  "config": {
+    "feature_set": "all",
+    "paper_weight": "sqrt",
+    "class_weight": "balanced",
+    "objective": "logistic",
+    "focal_gamma": 2.0,
+    "monotone_o2": false,
+    "paper_bagging": 0,
+    "random_state": 42,
+    "params": {
+      "n_estimators": 200,
+      "max_depth": 6,
+      "learning_rate": 0.05,
+      "min_child_weight": 10,
+      "subsample": 0.8,
+      "colsample_bytree": 0.6,
+      "gamma": 1.0,
+      "reg_lambda": 5.0,
+      "reg_alpha": 2.0
+    }
+  },
+  "n_rows": 4499,
+  "n_papers": 86,
+  "thresholds_from_validation_folds": {
+    "mcc": 0.5937127470970154,
+    "f1": 0.06533577293157578,
+    "balanced_accuracy": 0.8077459335327148,
+    "youden_j": 0.8077459335327148
+  },
+  "oof_group_roc_auc": 0.6978791425912643,
+  "oof_group_pr_auc": 0.8640460326028325,
+  "oof_mcc_threshold": 0.5937127470970154,
+  "oof_mcc_at_mcc": 0.28498653924578116,
+  "oof_f1_at_mcc": 0.814925820470553,
+  "oof_balacc_at_mcc": 0.6471661462735676,
+  "oof_f1_threshold": 0.06533577293157578,
+  "oof_mcc_at_f1": 0.075436344116813,
+  "oof_f1_at_f1": 0.8607015760040672,
+  "oof_balacc_at_f1": 0.5065137573092788,
+  "oof_balanced_accuracy_threshold": 0.8077459335327148,
+  "oof_mcc_at_balanced_accuracy": 0.26351416895604535,
+  "oof_f1_at_balanced_accuracy": 0.733109243697479,
+  "oof_balacc_at_balanced_accuracy": 0.6516190402546949,
+  "oof_youden_j_threshold": 0.8077459335327148,
+  "oof_mcc_at_youden_j": 0.26351416895604535,
+  "oof_f1_at_youden_j": 0.733109243697479,
+  "oof_balacc_at_youden_j": 0.6516190402546949
+}

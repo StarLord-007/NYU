@@ -389,16 +389,28 @@ COLS = {
     "article": "Article (MLA)",
     "authors": "Authors",
     "doi": "DOI",
-    "geometry": "Geometry of Sample (flat, wire, or Cylindrical)",
+    "geometry": "Geometry of Sample (Flat, wire, or Cylindrical)",
     "dimensions": (
         "Dimensions of sample (Wire is in diameter, Cylindrical is in length x radius x "
         "thickness, Rectangle is in length x width x height, Shperical)"
     ),
-    "material": "Material of sample",
+    "fuel_density": "fuel_density_kg_m3",
+    "fuel_thermal_conductivity": "fuel_k_W_mK",
+    "fuel_heat_capacity": "fuel_cp_J_kgK",
+    "fuel_pyrolysis_temperature": "fuel_pyrolysis_T_K",
+    "core_density": "core_density_kg_m3",
+    "core_heat_capacity": "core_cp_J_kgK",
+    "core_thermal_conductivity": "core_k_W_mK",
     "o2": "Oxygen Concentration",
+    "diluent_gas": "diluent",
+    "gas_molar_mass": "gas_M",
+    "gas_specific_heat": "gas_cp_mass",
+    "gas_thermal_conductivity": "gas_k",
+    "gas_density": "gas_density_kg_m3",
+    "gas_thermal_diffusivity": "gas_alpha_m2_s",
+    "gas_kinematic_viscosity": "gas_nu_m2_s",
     "pressure": "Pressure",
     "flow": "Flow Velocity (Co flow is + and counter flow is -)",
-    "rig": "Rig Name",
     "internal_geom": "Internal geometry (Cylindrical , rectangular)",
     "internal_dims": "Internal Dimensions",
     "gravity": "Gravity (g/gearth)",
@@ -410,7 +422,22 @@ COLS = {
     "ig_power": "Ignition power (W)",
     "ig_time": "Ignition time (s)",
     "ignition": "Ignition (Yes/No)",
+    # ---- optional identity / apparatus columns (see OPTIONAL_COLS) ----
+    # ``rig`` and ``material`` are present in some historical spreadsheets but
+    # NOT in ``Microgravity_Database_reduced.csv`` (which encodes the material
+    # implicitly through the fuel_* thermophysical columns). They are declared
+    # here only so the resolver can pick them up when they *do* exist.
+    "rig": "Rig Name",
+    "material": "Material of sample",
 }
+
+# Logical keys that are allowed to be absent from a given CSV. When a key in
+# this set cannot be resolved, ``_resolve_columns`` maps it to ``None`` instead
+# of raising, and ``load_clean`` degrades gracefully (fills the derived column
+# with NaN / a placeholder). This is what lets the *same* module load both the
+# legacy workbook (with Rig Name / Material of sample) and the new reduced CSV
+# (without them).
+OPTIONAL_COLS = {"rig", "material"}
 
 POST_IGNITION_LEAKS = [
     "Flame Length",
@@ -419,18 +446,43 @@ POST_IGNITION_LEAKS = [
     "Smoke/ Areosols (yes/no)",
 ]
 
+# Default database shipped alongside this module (used when no path is given).
+DEFAULT_DATA = "Microgravity_Database_reduced.csv"
+
 
 def _read_csv_any_encoding(path: Path) -> pd.DataFrame:
-    for enc in ("utf-8", "cp1252", "latin-1"):
+    """Read the two-row-header microgravity CSV under any common encoding.
+
+    The file uses a *section banner* first row (Citation / Sample / Flow / ...)
+    above the real field names, so we skip the first row. Windows-exported CSVs
+    carry ``\\r\\n`` line endings and cp1252 bytes; we try UTF-8 first, then the
+    Windows/Latin fallbacks. Fully-empty trailing ``Unnamed`` columns produced
+    by stray trailing commas are dropped here so downstream logic never sees
+    them.
+    """
+    last_err: Exception | None = None
+    for enc in ("utf-8", "utf-8-sig", "cp1252", "latin-1"):
         try:
-            return pd.read_csv(path, skiprows=1, encoding=enc)
-        except UnicodeDecodeError:
+            df = pd.read_csv(path, skiprows=1, encoding=enc)
+            # Strip trailing whitespace from every header (the reduced CSV has
+            # e.g. "Internal Dimensions " with a trailing space).
+            df.columns = [c.strip() if isinstance(c, str) else c for c in df.columns]
+            return df
+        except UnicodeDecodeError as exc:  # try the next encoding
+            last_err = exc
             continue
-    raise UnicodeDecodeError("all", b"", 0, 1, f"Could not decode {path}")
+    raise UnicodeDecodeError(
+        "all", b"", 0, 1, f"Could not decode {path} ({last_err})"
+    )
 
 
 def _resolve_columns(raw: pd.DataFrame) -> dict:
-    """Map the logical column registry onto whatever header variant the file has."""
+    """Map the logical column registry onto whatever header variant the file has.
+
+    Optional columns (``OPTIONAL_COLS``) resolve to ``None`` when absent rather
+    than raising, so one module can load both the legacy workbook and the new
+    reduced CSV.
+    """
     cols = {}
     available = {c.lower().strip(): c for c in raw.columns if isinstance(c, str)}
     fallbacks = {
@@ -440,6 +492,10 @@ def _resolve_columns(raw: pd.DataFrame) -> dict:
     for key, name in COLS.items():
         if name in raw.columns:
             cols[key] = name
+            continue
+        # exact match modulo case / surrounding whitespace
+        if name.lower().strip() in available:
+            cols[key] = available[name.lower().strip()]
             continue
         if key in fallbacks and fallbacks[key]:
             for cand in fallbacks[key]:
@@ -455,6 +511,8 @@ def _resolve_columns(raw: pd.DataFrame) -> dict:
             cols[key] = hits[0]
         elif key == "authors" and "authors" in available:
             cols[key] = available["authors"]
+        elif key in OPTIONAL_COLS:
+            cols[key] = None  # allowed to be missing
         else:
             raise KeyError(f"Cannot resolve column for '{key}' (wanted: {name!r})")
     return cols
@@ -489,18 +547,29 @@ NUMERIC_FEATURES = {
     "internal_dim_2_mm": "apparatus",
     "internal_dim_3_mm": "apparatus",
     "internal_dim_mean_mm": "apparatus",
+    "fuel_density": "physics",
+    "fuel_heat_capacity": "physics",
+    "fuel_thermal_conductivity": "physics",
+    "fuel_pyrolysis_temperature": "physics",
+    "core_density": "physics",
+    "core_heat_capacity": "physics",
+    "core_thermal_conductivity": "physics",
+    "gas_molar_mass": "physics",
+    "gas_density": "physics",
+    "gas_specific_heat": "physics",
+    "gas_thermal_conductivity": "physics",
+    "gas_thermal_diffusivity": "physics",
+    "gas_kinematic_viscosity": "physics",
 }
 
 CATEGORICAL_FEATURES = {
     "geometry_cat": "physics",
+    "diluent_gas_cat": "physics",
     "internal_geom_cat": "apparatus",
     "facility_cat": "apparatus",
     "ig_method_cat": "apparatus",
-    "material_family": "physics",
-    "core_material": "physics",
     "flow_direction": "physics",
     "gravity_regime": "physics",
-    "material_grouped": "apparatus",  # raw free-text grouping; near paper-unique
 }
 
 ALL_NUMERIC = list(NUMERIC_FEATURES)
@@ -518,7 +587,26 @@ def _group_rare(series, min_count=10, label="Other / Rare"):
 # Main loader
 # ---------------------------------------------------------------------------
 
-def load_clean(data_path: str | Path, dedupe: bool = True) -> pd.DataFrame:
+def locate_data_file(user_path: str | Path | None = None) -> Path:
+    """Resolve the database path robustly, independent of the cwd.
+
+    Search order: (1) the path exactly as given, (2) the default filename next
+    to this module, (3) the default filename in the module's parent directories.
+    When ``user_path`` is ``None`` the module default (``DEFAULT_DATA``) is used.
+    """
+    here = Path(__file__).resolve().parent
+    given = Path(user_path) if user_path is not None else Path(DEFAULT_DATA)
+    if given.exists():
+        return given
+    name = given.name
+    candidates = [here / name] + [parent / name for parent in here.parents]
+    for cand in candidates:
+        if cand.exists():
+            return cand
+    return given  # return original so the caller can emit a clear error
+
+
+def load_clean(data_path: str | Path | None = None, dedupe: bool = True) -> pd.DataFrame:
     """Load the latest CSV and return a clean feature frame.
 
     Returns a DataFrame with engineered features, the binary target
@@ -530,7 +618,9 @@ def load_clean(data_path: str | Path, dedupe: bool = True) -> pd.DataFrame:
     * ``raw_citation``   — original Article string (audit only, never a feature).
     * ``rig_name``       — original rig name (audit only, never a feature).
     """
-    data_path = Path(data_path)
+    data_path = locate_data_file(data_path)
+    if not data_path.exists():
+        raise FileNotFoundError(f"database not found: {data_path}")
     raw = _read_csv_any_encoding(data_path)
     raw.columns = [c.strip() if isinstance(c, str) else c for c in raw.columns]
     cols = _resolve_columns(raw)
@@ -555,6 +645,28 @@ def load_clean(data_path: str | Path, dedupe: bool = True) -> pd.DataFrame:
     df["ignition_power_w"] = raw[cols["ig_power"]].map(parse_watts)
     df["ignition_time_s"] = raw[cols["ig_time"]].map(parse_seconds)
     df["ignition_energy_j"] = df["ignition_power_w"] * df["ignition_time_s"]
+    df["gas_molar_mass"] = raw[cols["gas_molar_mass"]].map(_first_number)
+    df["gas_density"] = raw[cols["gas_density"]].map(_first_number)
+    df["gas_specific_heat"] = raw[cols["gas_specific_heat"]].map(_first_number)
+    df["gas_thermal_conductivity"] = raw[cols["gas_thermal_conductivity"]].map(_first_number)
+    df["gas_thermal_diffusivity"] = raw[cols["gas_thermal_diffusivity"]].map(_first_number)
+    df["gas_kinematic_viscosity"] = raw[cols["gas_kinematic_viscosity"]].map(_first_number)
+    df["diluent_gas_cat"] = _group_rare(raw[cols["diluent_gas"]].fillna("Unknown"))
+
+    # ---- fuel & core thermophysical properties -------------------------------
+    # The reduced database encodes the sample material implicitly, through these
+    # per-row thermophysical columns, instead of a free-text "Material" column.
+    # They are declared physics features in NUMERIC_FEATURES, so they MUST be
+    # materialised here (the previous version registered but never assigned them,
+    # which broke the drop_duplicates key). Missing / placeholder cells become
+    # NaN and are median-imputed downstream by the modelling pipelines.
+    df["fuel_density"] = raw[cols["fuel_density"]].map(_first_number)
+    df["fuel_heat_capacity"] = raw[cols["fuel_heat_capacity"]].map(_first_number)
+    df["fuel_thermal_conductivity"] = raw[cols["fuel_thermal_conductivity"]].map(_first_number)
+    df["fuel_pyrolysis_temperature"] = raw[cols["fuel_pyrolysis_temperature"]].map(_first_number)
+    df["core_density"] = raw[cols["core_density"]].map(_first_number)
+    df["core_heat_capacity"] = raw[cols["core_heat_capacity"]].map(_first_number)
+    df["core_thermal_conductivity"] = raw[cols["core_thermal_conductivity"]].map(_first_number)
 
     sample_dims = raw[cols["dimensions"]].map(extract_dimensions_mm)
     for i in range(3):
@@ -584,20 +696,17 @@ def load_clean(data_path: str | Path, dedupe: bool = True) -> pd.DataFrame:
     df["internal_geom_cat"] = raw[cols["internal_geom"]].map(normalise_internal_geometry)
     df["facility_cat"] = raw[cols["facility"]].map(normalise_facility)
     df["ig_method_cat"] = raw[cols["ig_method"]].map(normalise_ignition_method)
-    df["material_family"] = raw[cols["material"]].map(material_family)
-    df["core_material"] = raw[cols["material"]].map(core_material)
     df["flow_direction"] = df["flow_velocity_mm_s"].map(flow_direction)
     df["gravity_regime"] = df["gravity_g"].map(gravity_regime)
-    df["material_grouped"] = _group_rare(
-        raw[cols["material"]].fillna("Unknown").astype(str), min_count=10
-    )
 
     # ---- canonical paper identity ----
     doi_c = raw[cols["doi"]].map(canonical_doi)
     art_c = raw[cols["article"]].map(canonical_article)
     df["paper_id"] = doi_c.fillna("article::" + art_c.astype(str))
     df["raw_citation"] = raw[cols["article"]]
-    df["rig_name"] = raw[cols["rig"]]
+    # ``Rig Name`` is optional and absent from the reduced CSV; fall back to NaN
+    # so the audit code that references ``rig_name`` keeps working.
+    df["rig_name"] = raw[cols["rig"]] if cols.get("rig") else np.nan
 
     # Short label: first author surname + year-ish token + doi tail
     def _short_label(cit, pid):
@@ -705,3 +814,43 @@ def combined_weights(
     if use_class:
         w = w * class_weights(y)
     return w / w.mean()
+
+
+# ---------------------------------------------------------------------------
+# Self-test / smoke test
+# ---------------------------------------------------------------------------
+# Running ``python fable_common.py [path/to/database.csv]`` loads the database,
+# builds the feature frame and prints a short integrity report. This is a quick
+# way to confirm the module works against a new CSV before running the full
+# audit / train / eval pipeline.
+
+def _self_test(data_path: str | Path | None = None) -> None:
+    path = locate_data_file(data_path)
+    print(f"[fable_common] loading: {path}")
+    df = load_clean(path)
+    num, cat = feature_lists("all")
+    pnum, pcat = feature_lists("physics")
+    print(f"[fable_common] rows (after clean/dedupe) : {len(df)}")
+    print(f"[fable_common] unique papers             : {df['paper_id'].nunique()}")
+    print(f"[fable_common] ignition positive rate    : {df['ignition_binary'].mean():.3f}")
+    print(f"[fable_common] numeric features   (all)  : {len(num)}")
+    print(f"[fable_common] categorical features (all): {len(cat)}")
+    print(f"[fable_common] physics-only features     : {len(pnum)} numeric + {len(pcat)} categorical")
+
+    missing = [c for c in num + cat if c not in df.columns]
+    if missing:
+        raise RuntimeError(f"engineered features missing from frame: {missing}")
+    print("[fable_common] OK: every registered feature is present in the frame.")
+
+    # A couple of feature-coverage sanity numbers so a new CSV can be eyeballed.
+    print("\n[fable_common] non-null coverage of a few key features:")
+    for c in ["oxygen_fraction", "pressure_kpa", "gravity_g",
+              "fuel_density", "gas_density", "geometry_cat", "facility_cat"]:
+        if c in df.columns:
+            print(f"    {c:<28s}: {df[c].notna().mean() * 100:5.1f}%")
+
+
+if __name__ == "__main__":  # pragma: no cover
+    import sys
+
+    _self_test(sys.argv[1] if len(sys.argv) > 1 else None)

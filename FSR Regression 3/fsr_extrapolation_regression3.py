@@ -6,7 +6,8 @@ fsr_extrapolation_regression.py
 
 Paper-aware (extrapolation-first) machine-learning study of **Flame Spread Rate
 (FSR)** for the microgravity-combustion literature database
-(``Microgravity_Database.xlsm``).
+(``Microgravity_Database_reduced.csv``, or the original
+``Microgravity_Database.xlsm`` workbook).
 
 Scientific motivation
 ---------------------
@@ -108,10 +109,22 @@ run-to-run variability is visible. Per-repeat predictions are dumped to
 
 Run
 ---
-    python fsr_extrapolation_regression.py
+    python fsr_extrapolation_regression3.py
     # optional flags:
-    python fsr_extrapolation_regression.py --data Microgravity_Database.xlsm \
+    python fsr_extrapolation_regression3.py --data Microgravity_Database_reduced.csv \
         --out results --n-iter 40 --no-shap --bootstrap-n 1000 --n-repeats 10
+
+    # The loader also still accepts the original Excel workbook:
+    python fsr_extrapolation_regression3.py --data Microgravity_Database.xlsm
+
+Data input
+----------
+The script accepts either the CSV export (``Microgravity_Database_reduced.csv``,
+the new default) or the original Excel workbook (``Microgravity_Database.xlsm``).
+Both share the same two-row "section banner / field name" header, which the
+loader flattens automatically. All column-role detection (target, paper id,
+leakage, numeric/categorical) is done by heuristics, so renamed / reordered
+columns are tolerated.
 
 Author: ML / combustion research assistant
 Reproducibility: random_state = 42 wherever a seed is accepted.
@@ -253,16 +266,80 @@ def locate_data_file(user_path: str) -> Path:
 # 1. Data loading (robust to the two-row "section / field" Excel header)
 # =============================================================================
 
+def _load_csv_database(path: Path) -> pd.DataFrame:
+    """Load the microgravity database from a CSV export.
+
+    The CSV export (``Microgravity_Database_reduced.csv``) mirrors the Excel
+    sheet: a *section banner* first row (Citation / Sample / Flow / Extra /
+    Outputs / Info) sits above the real field-name row. We therefore skip the
+    first row and treat the second as the header. Windows exports use ``\\r\\n``
+    line endings and cp1252 bytes, so we try several encodings. A single-header
+    read is attempted as a fallback if the banner-skip parse does not surface an
+    FSR-like column.
+    """
+    encodings = ("utf-8", "utf-8-sig", "cp1252", "latin-1")
+
+    def _read(skiprows: int) -> pd.DataFrame | None:
+        for enc in encodings:
+            try:
+                df = pd.read_csv(path, skiprows=skiprows, encoding=enc)
+            except UnicodeDecodeError:
+                continue
+            except Exception:
+                return None
+            df.columns = [str(c).strip() for c in df.columns]
+            return df
+        return None
+
+    best_df = None
+    best_score = -1
+    for skip in (1, 0):  # banner-skip first, then plain single header
+        df = _read(skip)
+        if df is None:
+            continue
+        has_fsr = any(_looks_like_target(c) for c in df.columns)
+        score = len(df) * df.shape[1] + (10_000_000 if has_fsr else 0)
+        if score > best_score:
+            best_score, best_df = score, df
+
+    if best_df is None:
+        raise RuntimeError(f"Could not read CSV database {path} under any encoding.")
+
+    # Drop unlabeled 'Unnamed: N' columns. In this CSV export they are the
+    # trailing free-text "extra info" cells (e.g. "Orientation=horizontal",
+    # "T_init=20C") with no field name of their own. They carry no
+    # generalisable numeric signal and, worse, _first_number() would pick a
+    # spurious number out of them ("T=20C" -> 20) and mis-file the column as a
+    # numeric feature. Removing them keeps the feature matrix honest.
+    unnamed = [c for c in best_df.columns if str(c).startswith("Unnamed")]
+    if unnamed:
+        best_df = best_df.drop(columns=unnamed)
+    # Drop duplicated + fully-empty columns, then tidy text cells once.
+    best_df = best_df.loc[:, ~best_df.columns.duplicated()]
+    best_df = best_df.dropna(axis=1, how="all")
+    for c in best_df.columns:
+        if best_df[c].dtype == object:
+            best_df[c] = best_df[c].map(_clean_text)
+    return best_df.reset_index(drop=True)
+
+
 def load_database(path: Path) -> pd.DataFrame:
     """Load the microgravity database into a flat, single-header DataFrame.
 
-    The primary data sheet ("Sheet2") uses a *two-level* header: a top "section"
-    banner row (Citation / Sample / Flow / Outputs / Info) above the real field
-    names. We try that layout first and flatten it (keeping the descriptive
-    field name). If anything about the layout differs we gracefully fall back to
-    a single-header read and finally to whatever sheet/parse succeeds, so the
-    script does not hard-fail on a re-saved workbook.
+    Supports both the Excel workbook (``.xlsm`` / ``.xlsx``) and the CSV export
+    (``.csv``). For CSV the loading is delegated to :func:`_load_csv_database`.
+
+    The primary Excel data sheet ("Sheet2") uses a *two-level* header: a top
+    "section" banner row (Citation / Sample / Flow / Outputs / Info) above the
+    real field names. We try that layout first and flatten it (keeping the
+    descriptive field name). If anything about the layout differs we gracefully
+    fall back to a single-header read and finally to whatever sheet/parse
+    succeeds, so the script does not hard-fail on a re-saved workbook.
     """
+    # --- CSV export -------------------------------------------------------
+    if path.suffix.lower() == ".csv":
+        return _load_csv_database(path)
+
     read_kwargs = {}
     # .xlsm needs openpyxl; pandas picks it automatically, but be explicit.
     if path.suffix.lower() in {".xlsm", ".xlsx"}:
@@ -469,6 +546,13 @@ def detect_feature_types(
     categorical. The returned DataFrame has the numeric columns replaced by their
     parsed float values.
 
+    One important guard: chemical-formula / label columns such as the diluent
+    ("N2", "CO2", "Ar", "He") would otherwise be *mis-classified* as numeric,
+    because ``_first_number`` extracts the trailing subscript ("N2" -> 2,
+    "CO2" -> 2). We detect this case -- the values are dominated by short tokens
+    whose *first character is a letter* -- and force such columns to stay
+    categorical, which is what they physically are.
+
     Returns ``(numeric_cols, categorical_cols, transformed_df)``.
     """
     out = df.copy()
@@ -484,13 +568,35 @@ def detect_feature_types(
             continue
         parsed = series.map(_first_number)
         frac = parsed.notna().sum() / non_null
-        if frac >= numeric_frac_threshold:
+        if frac >= numeric_frac_threshold and not _looks_like_label_column(series):
             out[c] = parsed  # commit the numeric parse
             numeric_cols.append(c)
         else:
             out[c] = series.map(_clean_text)
             categorical_cols.append(c)
     return numeric_cols, categorical_cols, out
+
+
+# Matches a token that is really a category label rather than a measurement:
+# it begins with a letter and is short, e.g. a chemical formula ("N2", "CO2",
+# "Ar", "He") or a code. Genuine numeric cells ("94 W", "-60 mm/s", "101.3")
+# begin with a digit or sign, so they never match.
+_LABEL_TOKEN_RE = re.compile(r"^[A-Za-z][A-Za-z0-9\-/]{0,9}$")
+
+
+def _looks_like_label_column(series: pd.Series, label_frac_threshold: float = 0.60) -> bool:
+    """True when a string column is dominated by short letter-led label tokens.
+
+    Used to stop ``_first_number`` from turning chemical-formula categoricals
+    (diluent = N2 / CO2 / Ar / He) into bogus numeric features via their
+    subscripts. We look at the *cleaned string* values (not the parsed number)
+    and ask what fraction start with a letter and are short/formula-like.
+    """
+    vals = series.dropna().map(_clean_text).dropna().astype(str)
+    if len(vals) == 0:
+        return False
+    label_like = vals.map(lambda s: bool(_LABEL_TOKEN_RE.match(s.strip())))
+    return float(label_like.mean()) >= label_frac_threshold
 
 
 # =============================================================================
@@ -1226,9 +1332,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument("--data", default="Microgravity_Database.xlsm",
-                        help="Path to the Excel database (auto-located if not "
-                             "found in the current directory).")
+    parser.add_argument("--data", default="Microgravity_Database_reduced.csv",
+                        help="Path to the database (CSV export or Excel workbook; "
+                             "auto-located if not found in the current directory). "
+                             "Defaults to the reduced CSV export.")
     parser.add_argument("--out", default=str(SCRIPT_DIR / "results"),
                         help="Output directory for all artefacts "
                              "(defaults to a 'results' folder next to this script).")
