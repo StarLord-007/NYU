@@ -226,26 +226,6 @@ def normalise_internal_geometry(x):
     return "Other"
 
 
-def normalise_facility(x):
-    s = _clean_text(x)
-    if pd.isna(s):
-        return "Unknown"
-    l = str(s).lower()
-    if "parabolic" in l:
-        return "Parabolic Aircraft"
-    if "drop" in l:
-        return "Drop Tower + Centrifuge" if "centrifuge" in l else "Drop Tower"
-    if "centrifuge" in l or "hypergravity" in l:
-        return "Centrifuge"
-    if "iss" in l or "spacecraft" in l:
-        return "Spacecraft / ISS"
-    if "sounding" in l or "rocket" in l:
-        return "Sounding Rocket"
-    if "ground" in l:
-        return "Ground"
-    return "Other"
-
-
 def normalise_ignition_method(x):
     s = _clean_text(x)
     if pd.isna(s):
@@ -397,6 +377,8 @@ COLS = {
     "fuel_density": "fuel_density_kg_m3",
     "fuel_k": "fuel_k_W_mK",
     "fuel_cp": "fuel_cp_J_kgK",
+    "fuel_pyroTemp": "fuel_pyrolysis_T_K",
+    "fuel_alpha": "fuel_alpha_m2_s",
     "core_density": "core_density_kg_m3",
     "core_k": "core_k_W_mK",
     "core_cp": "core_cp_J_kgK",
@@ -413,11 +395,7 @@ COLS = {
     "internal_geom": "Internal geometry (Cylindrical , rectangular)",
     "internal_dims": "Internal Dimensions",
     "gravity": "Gravity (g/gearth)",
-    "facility": (
-        "Expireimental facility (Parabolic Aircraft, Drop Tower, Spacecraft, "
-        "Sounding Rocket, Ground)"
-    ),
-    "ig_method": "Ignition method (Wire, open flame, or Radiative Heater",
+    "ig_method": "Ignition method (Wire, open flame, or Radiative Heater)",
     "ig_power": "Ignition power (W)",
     "ig_time": "Ignition time (s)",
     "ignition": "Ignition (Yes/No)",
@@ -480,6 +458,8 @@ NUMERIC_FEATURES = {
     "fuel_density_kg_m3": "physics",
     "fuel_k_w_mk": "physics",
     "fuel_cp_j_kgk": "physics",
+    "fuel_pyroTemp": "physics",
+    "fuel_alpha": "physics",
     "core_density_kg_m3": "physics",
     "core_k_w_mk": "physics",
     "core_cp_j_kgk": "physics",
@@ -498,16 +478,16 @@ NUMERIC_FEATURES = {
     "ignition_power_w": "apparatus",
     "ignition_time_s": "apparatus",
     "ignition_energy_j": "apparatus",
-    "sample_dim_1_mm": "physics",
-    "sample_dim_2_mm": "physics",
-    "sample_dim_3_mm": "physics",
-    "sample_dim_min_mm": "physics",
-    "sample_dim_max_mm": "physics",
-    "sample_dim_mean_mm": "physics",
+    "sample_dim_1_mm": "apparatus",
+    "sample_dim_2_mm": "apparatus",
+    "sample_dim_3_mm": "apparatus",
+    "sample_dim_min_mm": "apparatus",
+    "sample_dim_max_mm": "apparatus",
+    "sample_dim_mean_mm": "apparatus",
     "sample_dim_count": "apparatus",
-    "core_diameter_mm": "physics",
-    "outer_diameter_mm": "physics",
-    "insulation_thickness_mm": "physics",
+    "core_diameter_mm": "apparatus",
+    "outer_diameter_mm": "apparatus",
+    "insulation_thickness_mm": "apparatus",
     "internal_dim_1_mm": "apparatus",
     "internal_dim_2_mm": "apparatus",
     "internal_dim_3_mm": "apparatus",
@@ -517,7 +497,6 @@ NUMERIC_FEATURES = {
 CATEGORICAL_FEATURES = {
     "geometry_cat": "physics",
     "internal_geom_cat": "apparatus",
-    "facility_cat": "apparatus",
     "ig_method_cat": "apparatus",
     "diluent_cat": "physics",
     "flow_direction": "physics",
@@ -572,6 +551,8 @@ def load_clean(data_path: str | Path, dedupe: bool = True) -> pd.DataFrame:
         "fuel_density": "fuel_density_kg_m3",
         "fuel_k": "fuel_k_w_mk",
         "fuel_cp": "fuel_cp_j_kgk",
+        "fuel_pyroTemp": "fuel_pyrolysis_T_K",
+        "fuel_alpha": "fuel_alpha_m2_s",
         "core_density": "core_density_kg_m3",
         "core_k": "core_k_w_mk",
         "core_cp": "core_cp_j_kgk",
@@ -620,7 +601,6 @@ def load_clean(data_path: str | Path, dedupe: bool = True) -> pd.DataFrame:
 
     df["geometry_cat"] = raw[cols["geometry"]].map(normalise_geometry)
     df["internal_geom_cat"] = raw[cols["internal_geom"]].map(normalise_internal_geometry)
-    df["facility_cat"] = raw[cols["facility"]].map(normalise_facility)
     df["ig_method_cat"] = raw[cols["ig_method"]].map(normalise_ignition_method)
     df["diluent_cat"] = _group_rare(
         raw[cols["diluent"]].fillna("Unknown").astype(str), min_count=10
