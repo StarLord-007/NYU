@@ -213,8 +213,11 @@ def feature_manifest() -> list[dict[str, str]]:
 def load_data(path: str | Path, require_target: bool = True, deduplicate: bool = True
               ) -> tuple[pd.DataFrame, dict[str, Any]]:
     raw, encoding = read_raw(path)
-    columns = _resolve(raw, require_target=require_target)
     original_rows = len(raw)
+    blank_mask = raw.replace(r"^\s*$", np.nan, regex=True).isna().all(axis=1)
+    blank_source_rows = (raw.index[blank_mask] + 3).astype(int).tolist()
+    raw = raw.loc[~blank_mask].copy()
+    columns = _resolve(raw, require_target=require_target)
     raw = raw.drop(columns=[c for c in raw if c.startswith("Unnamed")], errors="ignore")
     for column in raw.select_dtypes(include="object"):
         raw[column] = raw[column].map(_text)
@@ -319,6 +322,8 @@ def load_data(path: str | Path, require_target: bool = True, deduplicate: bool =
         "data_version": DATA_VERSION, "dataset_path": str(Path(path).resolve()),
         "dataset_sha256": dataset_hash(path), "encoding": encoding,
         "raw_row_count": original_rows, "row_count": len(df),
+        "blank_row_count": len(blank_source_rows),
+        "blank_source_rows": blank_source_rows,
         "label_counts": ({str(k): int(v) for k, v in df["ignition_binary"].value_counts().items()}
                          if "ignition_binary" in df else {}),
         "missing_target_count": len(missing_target_rows),
