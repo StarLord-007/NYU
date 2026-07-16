@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import traceback
+from collections import Counter
 from itertools import combinations
 from pathlib import Path
 from typing import Any
@@ -193,6 +194,7 @@ def main() -> None:
     split_groups = list(assignments.groupby("split_id", sort=False))
     for candidate_number, candidate in enumerate(candidates):
         candidate_id = candidate["candidate_id"]
+        grouped_params_by_paper: dict[str, list[str]] = {}
         manifest_rows.append({
             **{k: v for k, v in candidate.items()
                if k not in {"fixed_params", "search_space"}},
@@ -223,17 +225,46 @@ def main() -> None:
                 if len(np.unique(y_train)) < 2:
                     raise ValueError("Outer training split does not contain both target classes")
                 search_seed = base_seed + candidate_number * 100000 + split_number
+                search_candidate = candidate
+                search_iterations = args.search_iterations
+                frozen_lopo_params: dict[str, Any] | None = None
+                if protocol == "lopo":
+                    held_out_paper = next(iter(test_papers))
+                    eligible_params = grouped_params_by_paper.get(held_out_paper, [])
+                    if not eligible_params:
+                        raise ValueError(
+                            "No grouped-CV hyperparameter selection excluded the LOPO paper")
+                    counts = Counter(eligible_params)
+                    modal_json = min(
+                        value for value, count in counts.items() if count == max(counts.values()))
+                    frozen_lopo_params = json.loads(modal_json)
+                    search_candidate = {
+                        **candidate,
+                        "fixed_params": {
+                            **candidate.get("fixed_params", {}), **frozen_lopo_params},
+                        "search_space": {},
+                    }
+                    search_iterations = 1
                 search = nested_search(
-                    candidate, df.iloc[train].reset_index(drop=True), y_train,
+                    search_candidate, df.iloc[train].reset_index(drop=True), y_train,
                     df.iloc[train]["paper_id"].reset_index(drop=True), protocol,
-                    args.search_iterations, args.inner_group_folds, search_seed)
-                model = make_model(candidate, search.selected_params, search_seed)
+                    search_iterations, args.inner_group_folds, search_seed)
+                selected_params = (
+                    frozen_lopo_params if frozen_lopo_params is not None
+                    else search.selected_params)
+                model = make_model(
+                    search_candidate,
+                    {} if frozen_lopo_params is not None else search.selected_params,
+                    search_seed)
                 model.fit(df.iloc[train], y_train, df.iloc[train]["paper_id"].reset_index(drop=True))
                 probability = model.predict_proba(df.iloc[test])
                 if not np.all(np.isfinite(probability)) or np.any((probability < 0) | (probability > 1)):
                     protocol_status[status_key]["valid_probabilities"] = False
                     raise ValueError("Invalid probability output")
-                selected_json = json.dumps(search.selected_params, sort_keys=True)
+                selected_json = json.dumps(selected_params, sort_keys=True)
+                if protocol == "extrapolation_grouped":
+                    for paper in test_papers:
+                        grouped_params_by_paper.setdefault(paper, []).append(selected_json)
                 weighting_json = manifest_rows[-1]["weighting_policy"]
                 if (protocol == "extrapolation_grouped" and
                         candidate["model_family"] == "xgboost" and
@@ -283,11 +314,18 @@ def main() -> None:
                 history = search.history.assign(
                     split_id=split_id, protocol=protocol, seed=seed, fold=fold,
                     model_id=candidate_id)
+                if frozen_lopo_params is not None:
+                    history["parameters"] = selected_json
                 history_frames.append(history)
                 inner_prediction_frames.append(search.inner_predictions.assign(
                     split_id=split_id, protocol=protocol, seed=seed, fold=fold,
                     model_id=candidate_id))
                 protocol_status[status_key]["completed_folds"] += 1
+                print(
+                    f"[{candidate_number + 1}/{len(candidates)}] {candidate_id} "
+                    f"[{split_number + 1}/{len(split_groups)}] {split_id}: complete",
+                    flush=True,
+                )
             except Exception as exc:
                 protocol_status[status_key]["passed"] = False
                 protocol_status[status_key]["errors"].append(f"{split_id}: {exc}")
@@ -296,6 +334,11 @@ def main() -> None:
                     "error_type": type(exc).__name__, "error": str(exc),
                     "traceback": traceback.format_exc(),
                 })
+                print(
+                    f"[{candidate_number + 1}/{len(candidates)}] {candidate_id} "
+                    f"[{split_number + 1}/{len(split_groups)}] {split_id}: FAILED: {exc}",
+                    flush=True,
+                )
 
     predictions = pd.DataFrame(prediction_rows)
     fold_metrics = pd.DataFrame(metric_rows)
@@ -364,6 +407,11 @@ def main() -> None:
         "inner_folds": args.inner_group_folds,
         "threshold_policy": {
             name: "selected exclusively from inner OOF predictions" for name in THRESHOLD_NAMES},
+        "lopo_hyperparameter_policy": (
+            "For each held-out paper, freeze the modal selected hyperparameters from repeated "
+            "grouped outer folds whose training partitions excluded that paper; resolve modal "
+            "ties lexically. LOPO thresholds remain fitted from grouped inner OOF predictions "
+            "using only the LOPO training partition."),
         "bootstrap": {
             "iterations": args.bootstrap_iterations,
             "interpolation_unit": "unique row_id",

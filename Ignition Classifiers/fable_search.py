@@ -77,7 +77,7 @@ def optimize_thresholds(y: np.ndarray, probability: np.ndarray) -> dict[str, flo
 
 def _sample_configs(candidate: dict[str, Any], iterations: int, seed: int) -> list[dict[str, Any]]:
     spec = MODEL_REGISTRY[candidate["model_family"]]
-    space = candidate.get("search_space") or spec.search_space
+    space = candidate["search_space"] if "search_space" in candidate else spec.search_space
     if not space:
         return [{}]
     rng = np.random.default_rng(seed)

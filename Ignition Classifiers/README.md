@@ -104,6 +104,12 @@ model fitting, and threshold optimization therefore see no outer test rows. ROC-
 objective; PR-AUC, MCC, balanced accuracy, F1, Brier score, sensitivity, specificity, and precision
 are retained.
 
+For each LOPO fold, hyperparameters are frozen to the modal configuration selected by repeated
+grouped outer folds whose training partitions excluded that same held-out paper. Modal ties resolve
+lexically. This avoids both LOPO-paper leakage and redundant 40-configuration retuning. LOPO
+thresholds are still derived from grouped inner OOF predictions using only that fold's training
+papers.
+
 Four decision thresholds remain separate: MCC, F1, balanced accuracy, and Youden J. Each is frozen
 from inner out-of-fold predictions before scoring the outer test fold. None is called universally
 best.
