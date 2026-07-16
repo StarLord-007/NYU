@@ -3,3 +3,15 @@ __pycache__/
 artifacts/
 artifacts_v2/
 presentation/figures/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.joblib
+*.parquet
+
+# Heavy ignition-pipeline outputs; retain only directory placeholders.
+Ignition Classifiers/results/*
+!Ignition Classifiers/results/.gitkeep
+!Ignition Classifiers/artifacts/
+Ignition Classifiers/artifacts/*
+!Ignition Classifiers/artifacts/.gitkeep

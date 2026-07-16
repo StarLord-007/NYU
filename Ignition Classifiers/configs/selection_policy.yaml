@@ -1,0 +1,40 @@
+version: 1
+required_integrity_pass: true
+required_complete_folds: true
+required_valid_probabilities: true
+instability:
+  metric: roc_auc
+  maximum_fold_standard_deviation: 0.15
+tie_tolerance: 0.01
+refit_hyperparameter_rule: modal outer-fold selected configuration with lexical tie resolution
+simplicity_order:
+  - decision_tree
+  - knn
+  - svm
+  - xgboost
+  - mlp
+selections:
+  interpolation_champion:
+    primary_protocol: interpolation_stratified
+    primary_metric: roc_auc
+    tie_breakers:
+      - higher_pr_auc
+      - lower_uncertainty
+      - simpler_model
+      - fewer_features
+  extrapolation_champion:
+    primary_protocol: extrapolation_grouped
+    primary_metric: roc_auc
+    mandatory_robustness_protocol: lopo
+    tie_breakers:
+      - higher_pr_auc
+      - lower_uncertainty
+      - physics_only
+      - simpler_model
+operational_threshold_policy:
+  thresholds:
+    mcc: maximize Matthews correlation coefficient on inner or out-of-fold validation predictions
+    f1: maximize F1 on inner or out-of-fold validation predictions
+    balanced_accuracy: maximize balanced accuracy on inner or out-of-fold validation predictions
+    youden_j: maximize sensitivity plus specificity minus one on inner or out-of-fold validation predictions
+  universal_best_threshold: false

@@ -1,0 +1,88 @@
+version: 1
+random_state: 42
+candidates:
+  - candidate_id: xgb_all_unweighted
+    model_family: xgboost
+    feature_set: all
+    paper_weight: none
+    class_weight: false
+    fixed_params: {objective_variant: logistic}
+  - candidate_id: xgb_physics_unweighted
+    model_family: xgboost
+    feature_set: physics
+    paper_weight: none
+    class_weight: false
+    fixed_params: {objective_variant: logistic}
+  - candidate_id: xgb_all_class_paper_weighted
+    model_family: xgboost
+    feature_set: all
+    paper_weight: sqrt
+    class_weight: true
+    fixed_params: {objective_variant: logistic}
+  - candidate_id: xgb_physics_class_paper_weighted_monotone_o2
+    model_family: xgboost
+    feature_set: physics
+    paper_weight: sqrt
+    class_weight: true
+    monotone_oxygen: true
+    fixed_params: {objective_variant: logistic}
+  - candidate_id: xgb_all_focal_class_paper_weighted
+    model_family: xgboost
+    feature_set: all
+    paper_weight: sqrt
+    class_weight: true
+    fixed_params: {objective_variant: focal, focal_gamma: 2.0}
+  - candidate_id: xgb_physics_focal_class_paper_weighted
+    model_family: xgboost
+    feature_set: physics
+    paper_weight: sqrt
+    class_weight: true
+    fixed_params: {objective_variant: focal, focal_gamma: 2.0}
+  - candidate_id: xgb_physics_paper_bagging
+    model_family: xgboost
+    feature_set: physics
+    paper_weight: sqrt
+    class_weight: true
+    monotone_oxygen: true
+    paper_bagging: 10
+    fixed_params: {objective_variant: logistic}
+  - candidate_id: knn_all
+    model_family: knn
+    feature_set: all
+    paper_weight: sqrt
+    class_weight: true
+  - candidate_id: knn_physics
+    model_family: knn
+    feature_set: physics
+    paper_weight: sqrt
+    class_weight: true
+  - candidate_id: decision_tree_all
+    model_family: decision_tree
+    feature_set: all
+    paper_weight: sqrt
+    class_weight: true
+  - candidate_id: decision_tree_physics
+    model_family: decision_tree
+    feature_set: physics
+    paper_weight: sqrt
+    class_weight: true
+  - candidate_id: mlp_all
+    model_family: mlp
+    feature_set: all
+    paper_weight: sqrt
+    class_weight: true
+  - candidate_id: mlp_physics
+    model_family: mlp
+    feature_set: physics
+    paper_weight: sqrt
+    class_weight: true
+  - candidate_id: svm_all
+    model_family: svm
+    feature_set: all
+    paper_weight: sqrt
+    class_weight: true
+  - candidate_id: svm_physics
+    model_family: svm
+    feature_set: physics
+    paper_weight: sqrt
+    class_weight: true
