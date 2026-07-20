@@ -1,0 +1,364 @@
+{
+  "blank_row_count": 26,
+  "blank_source_rows": [
+    5060,
+    5061,
+    5062,
+    5063,
+    5064,
+    5065,
+    5066,
+    5067,
+    5068,
+    5069,
+    5070,
+    5071,
+    5072,
+    5073,
+    5074,
+    5075,
+    5076,
+    5077,
+    5078,
+    5079,
+    5080,
+    5081,
+    5082,
+    5083,
+    5084,
+    5085
+  ],
+  "data_version": "fable-data-v3",
+  "dataset_path": "C:\\Users\\boyna\\OneDrive\\Documents\\GitHub\\NYU\\Microgravity_Database_reduced.csv",
+  "dataset_sha256": "9a4053a73d1e0626f3efd2f1ba4abb270560457087affa87d9a8749611afdf26",
+  "duplicate_count": 558,
+  "encoding": "utf-8",
+  "feature_availability": {
+    "core_cp_j_kgk": true,
+    "core_density_kg_m3": true,
+    "core_diameter_mm": true,
+    "core_k_w_mk": true,
+    "diluent_cat": true,
+    "facility_cat": true,
+    "flow_direction_cat": true,
+    "flow_speed_abs_mm_s": true,
+    "flow_velocity_mm_s": true,
+    "fuel_alpha_m2_s": true,
+    "fuel_cp_j_kgk": true,
+    "fuel_density_kg_m3": true,
+    "fuel_k_w_mk": true,
+    "fuel_pyrolysis_t_k": true,
+    "gas_alpha_m2_s": true,
+    "gas_cp_j_kgk": true,
+    "gas_density_kg_m3": true,
+    "gas_k_w_mk": true,
+    "gas_molar_mass": true,
+    "gas_nu_m2_s": true,
+    "geometry_cat": true,
+    "gravity_g": true,
+    "gravity_regime_cat": true,
+    "ignition_energy_j": true,
+    "ignition_method_cat": true,
+    "ignition_power_w": true,
+    "ignition_time_s": true,
+    "insulation_thickness_mm": true,
+    "internal_dim_1_mm": true,
+    "internal_dim_2_mm": true,
+    "internal_dim_3_mm": true,
+    "internal_dim_mean_mm": true,
+    "internal_geometry_cat": true,
+    "log10_gravity_g": true,
+    "outer_diameter_mm": true,
+    "oxygen_fraction": true,
+    "pressure_kpa": true,
+    "sample_dim_1_mm": true,
+    "sample_dim_2_mm": true,
+    "sample_dim_3_mm": true,
+    "sample_dim_count": true,
+    "sample_dim_max_mm": true,
+    "sample_dim_mean_mm": true,
+    "sample_dim_min_mm": true
+  },
+  "feature_manifest": [
+    {
+      "feature": "fuel_density_kg_m3",
+      "kind": "numeric",
+      "role": "physics"
+    },
+    {
+      "feature": "fuel_k_w_mk",
+      "kind": "numeric",
+      "role": "physics"
+    },
+    {
+      "feature": "fuel_cp_j_kgk",
+      "kind": "numeric",
+      "role": "physics"
+    },
+    {
+      "feature": "fuel_pyrolysis_t_k",
+      "kind": "numeric",
+      "role": "physics"
+    },
+    {
+      "feature": "fuel_alpha_m2_s",
+      "kind": "numeric",
+      "role": "physics"
+    },
+    {
+      "feature": "core_density_kg_m3",
+      "kind": "numeric",
+      "role": "physics"
+    },
+    {
+      "feature": "core_k_w_mk",
+      "kind": "numeric",
+      "role": "physics"
+    },
+    {
+      "feature": "core_cp_j_kgk",
+      "kind": "numeric",
+      "role": "physics"
+    },
+    {
+      "feature": "oxygen_fraction",
+      "kind": "numeric",
+      "role": "physics"
+    },
+    {
+      "feature": "gas_molar_mass",
+      "kind": "numeric",
+      "role": "physics"
+    },
+    {
+      "feature": "gas_cp_j_kgk",
+      "kind": "numeric",
+      "role": "physics"
+    },
+    {
+      "feature": "gas_k_w_mk",
+      "kind": "numeric",
+      "role": "physics"
+    },
+    {
+      "feature": "gas_density_kg_m3",
+      "kind": "numeric",
+      "role": "physics"
+    },
+    {
+      "feature": "gas_alpha_m2_s",
+      "kind": "numeric",
+      "role": "physics"
+    },
+    {
+      "feature": "gas_nu_m2_s",
+      "kind": "numeric",
+      "role": "physics"
+    },
+    {
+      "feature": "pressure_kpa",
+      "kind": "numeric",
+      "role": "physics"
+    },
+    {
+      "feature": "flow_velocity_mm_s",
+      "kind": "numeric",
+      "role": "physics"
+    },
+    {
+      "feature": "flow_speed_abs_mm_s",
+      "kind": "numeric",
+      "role": "physics"
+    },
+    {
+      "feature": "gravity_g",
+      "kind": "numeric",
+      "role": "physics"
+    },
+    {
+      "feature": "log10_gravity_g",
+      "kind": "numeric",
+      "role": "physics"
+    },
+    {
+      "feature": "ignition_power_w",
+      "kind": "numeric",
+      "role": "apparatus"
+    },
+    {
+      "feature": "ignition_time_s",
+      "kind": "numeric",
+      "role": "apparatus"
+    },
+    {
+      "feature": "ignition_energy_j",
+      "kind": "numeric",
+      "role": "apparatus"
+    },
+    {
+      "feature": "sample_dim_1_mm",
+      "kind": "numeric",
+      "role": "apparatus"
+    },
+    {
+      "feature": "sample_dim_2_mm",
+      "kind": "numeric",
+      "role": "apparatus"
+    },
+    {
+      "feature": "sample_dim_3_mm",
+      "kind": "numeric",
+      "role": "apparatus"
+    },
+    {
+      "feature": "sample_dim_min_mm",
+      "kind": "numeric",
+      "role": "apparatus"
+    },
+    {
+      "feature": "sample_dim_max_mm",
+      "kind": "numeric",
+      "role": "apparatus"
+    },
+    {
+      "feature": "sample_dim_mean_mm",
+      "kind": "numeric",
+      "role": "apparatus"
+    },
+    {
+      "feature": "sample_dim_count",
+      "kind": "numeric",
+      "role": "apparatus"
+    },
+    {
+      "feature": "core_diameter_mm",
+      "kind": "numeric",
+      "role": "apparatus"
+    },
+    {
+      "feature": "outer_diameter_mm",
+      "kind": "numeric",
+      "role": "apparatus"
+    },
+    {
+      "feature": "insulation_thickness_mm",
+      "kind": "numeric",
+      "role": "apparatus"
+    },
+    {
+      "feature": "internal_dim_1_mm",
+      "kind": "numeric",
+      "role": "apparatus"
+    },
+    {
+      "feature": "internal_dim_2_mm",
+      "kind": "numeric",
+      "role": "apparatus"
+    },
+    {
+      "feature": "internal_dim_3_mm",
+      "kind": "numeric",
+      "role": "apparatus"
+    },
+    {
+      "feature": "internal_dim_mean_mm",
+      "kind": "numeric",
+      "role": "apparatus"
+    },
+    {
+      "feature": "geometry_cat",
+      "kind": "categorical",
+      "role": "physics"
+    },
+    {
+      "feature": "diluent_cat",
+      "kind": "categorical",
+      "role": "physics"
+    },
+    {
+      "feature": "flow_direction_cat",
+      "kind": "categorical",
+      "role": "physics"
+    },
+    {
+      "feature": "gravity_regime_cat",
+      "kind": "categorical",
+      "role": "physics"
+    },
+    {
+      "feature": "internal_geometry_cat",
+      "kind": "categorical",
+      "role": "apparatus"
+    },
+    {
+      "feature": "facility_cat",
+      "kind": "categorical",
+      "role": "apparatus"
+    },
+    {
+      "feature": "ignition_method_cat",
+      "kind": "categorical",
+      "role": "apparatus"
+    }
+  ],
+  "label_counts": {
+    "0": 1105,
+    "1": 3394
+  },
+  "missing_target_count": 0,
+  "missingness_by_model_feature": {
+    "core_cp_j_kgk": 2900,
+    "core_density_kg_m3": 2900,
+    "core_diameter_mm": 3085,
+    "core_k_w_mk": 2900,
+    "diluent_cat": 0,
+    "facility_cat": 0,
+    "flow_direction_cat": 0,
+    "flow_speed_abs_mm_s": 901,
+    "flow_velocity_mm_s": 901,
+    "fuel_alpha_m2_s": 0,
+    "fuel_cp_j_kgk": 0,
+    "fuel_density_kg_m3": 0,
+    "fuel_k_w_mk": 0,
+    "fuel_pyrolysis_t_k": 0,
+    "gas_alpha_m2_s": 48,
+    "gas_cp_j_kgk": 0,
+    "gas_density_kg_m3": 48,
+    "gas_k_w_mk": 0,
+    "gas_molar_mass": 0,
+    "gas_nu_m2_s": 48,
+    "geometry_cat": 0,
+    "gravity_g": 54,
+    "gravity_regime_cat": 0,
+    "ignition_energy_j": 3599,
+    "ignition_method_cat": 0,
+    "ignition_power_w": 3599,
+    "ignition_time_s": 2423,
+    "insulation_thickness_mm": 4455,
+    "internal_dim_1_mm": 472,
+    "internal_dim_2_mm": 1540,
+    "internal_dim_3_mm": 3370,
+    "internal_dim_mean_mm": 472,
+    "internal_geometry_cat": 0,
+    "log10_gravity_g": 54,
+    "outer_diameter_mm": 4422,
+    "oxygen_fraction": 0,
+    "pressure_kpa": 48,
+    "sample_dim_1_mm": 24,
+    "sample_dim_2_mm": 378,
+    "sample_dim_3_mm": 2085,
+    "sample_dim_count": 0,
+    "sample_dim_max_mm": 24,
+    "sample_dim_mean_mm": 24,
+    "sample_dim_min_mm": 24
+  },
+  "paper_count": 85,
+  "post_outcome_columns_excluded": [
+    "Flame Length",
+    "FSR (Flame Spread Rate)",
+    "HRR (Heat release rate)",
+    "Smoke/ Areosols (yes/no)"
+  ],
+  "raw_row_count": 5083,
+  "row_count": 4499
+}

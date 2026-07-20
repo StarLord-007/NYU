@@ -1,0 +1,26 @@
+{
+  "base_seed": 42,
+  "data_version": "fable-data-v3",
+  "dataset_sha256": "9a4053a73d1e0626f3efd2f1ba4abb270560457087affa87d9a8749611afdf26",
+  "integrity": {
+    "failures": [],
+    "passed": true,
+    "splits_checked": 118
+  },
+  "label_counts": {
+    "0": 1105,
+    "1": 3394
+  },
+  "label_prevalence": 0.7543898644143143,
+  "n_group_folds": 5,
+  "n_row_folds": 5,
+  "n_seeds": 3,
+  "paper_count": 85,
+  "protocol_split_counts": {
+    "extrapolation_grouped": 15,
+    "interpolation_holdout": 3,
+    "interpolation_stratified": 15,
+    "lopo": 85
+  },
+  "row_count": 4499
+}

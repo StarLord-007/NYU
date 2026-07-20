@@ -9,9 +9,6 @@ presentation/figures/
 *.joblib
 *.parquet
 
-# Heavy ignition-pipeline outputs; retain only directory placeholders.
-Ignition Classifiers/results/*
-!Ignition Classifiers/results/.gitkeep
-!Ignition Classifiers/artifacts/
-Ignition Classifiers/artifacts/*
-!Ignition Classifiers/artifacts/.gitkeep
+# Large evaluation prediction artifacts
+Ignition Classifiers/results/evaluation/inner_oof_predictions.csv
+Ignition Classifiers/results/evaluation/outer_fold_predictions.csv
