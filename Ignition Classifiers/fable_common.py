@@ -10,7 +10,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-DATA_VERSION = "fable-data-v3"
+DATA_VERSION = "fable-data-v4"
 ENCODINGS = ("utf-8", "utf-8-sig", "cp1252", "latin-1")
 _NUM = re.compile(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?")
 _DIM = re.compile(r"([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s*(µm|μm|um|mm|cm|m)?", re.I)
@@ -25,14 +25,13 @@ COLUMNS = {
     "oxygen": "Oxygen Concentration", "diluent": "diluent", "gas_m": "gas_M",
     "gas_cp": "gas_cp_mass", "gas_k": "gas_k", "gas_density": "gas_density_kg_m3",
     "gas_alpha": "gas_alpha_m2_s", "gas_nu": "gas_nu_m2_s", "pressure": "Pressure",
-    "flow": "Flow Velocity", "internal_geometry": "Internal geometry",
+    "flow": "Flow Velocity", "internal_geometry": "Internal Geometry",
     "internal_dimensions": "Internal Dimensions", "gravity": "Gravity",
-    "facility": "Expireimental facility", "ignition_method": "Ignition method",
-    "ignition_power": "Ignition power", "ignition_time": "Ignition time",
-    "target": "Ignition (Yes/No)",
+    "facility": "Facility", "ignition_method": "Ignition Method",
+    "ignition_power": "Ignition Power", "ignition_time": "Ignition Time",
+    "target": "Ignition",
 }
-POST_OUTCOME_COLUMNS = ("Flame Length", "FSR (Flame Spread Rate)", "HRR (Heat release rate)",
-                        "Smoke/ Areosols (yes/no)")
+POST_OUTCOME_COLUMNS = ("Flame Length", "FSR", "HRR", "Smoke/ Areosols")
 
 NUMERIC_FEATURES = {
     "fuel_density_kg_m3": "physics", "fuel_k_w_mk": "physics",
@@ -153,7 +152,7 @@ def canonical_citation(value: Any) -> str | float:
     value = _text(value)
     if pd.isna(value):
         return np.nan
-    text = str(value).lower().translate(str.maketrans({"“": '"', "”": '"', "’": "'", "–": "-", "—": "-"}))
+    text = str(value).lower().translate(str.maketrans({"\u201c": '"', "\u201d": '"', "\u2019": "'", "\u2013": "-", "\u2014": "-"}))
     return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9 ]+", " ", text)).strip()
 
 
