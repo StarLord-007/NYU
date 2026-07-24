@@ -157,17 +157,74 @@ def canonical_citation(value: Any) -> str | float:
 
 
 def _resolve(raw: pd.DataFrame, require_target: bool) -> dict[str, str]:
+    """
+    Resolve database columns robustly.
+
+    Rules:
+    1. Target ("Ignition") MUST match exactly.
+    2. All other columns:
+       - prefer exact match;
+       - otherwise accept headers that start with the expected name
+         (e.g. "Pressure (kPa)", "Ignition Power (W)").
+    """
     found: dict[str, str] = {}
     inference_optional = {"article", "authors", "doi", "target"}
+
+    # Map normalized header -> original header
+    normalized = {
+        str(c).strip().lower(): c
+        for c in raw.columns
+    }
+
     for key, wanted in COLUMNS.items():
-        hits = [column for column in raw.columns if str(column).strip().lower().startswith(wanted.lower())]
-        if hits:
-            found[key] = hits[0]
-        elif require_target or key not in inference_optional:
+
+        wanted_norm = wanted.strip().lower()
+
+        # ------------------------------------------------------------------
+        # TARGET: require an exact match ("Ignition")
+        # ------------------------------------------------------------------
+        if key == "target":
+            if wanted_norm in normalized:
+                found[key] = normalized[wanted_norm]
+                continue
+
+            if require_target:
+                raise ValueError(
+                    f"Required target column '{wanted}' not found.\n"
+                    f"Available columns:\n{list(raw.columns)}"
+                )
+            continue
+
+        # ------------------------------------------------------------------
+        # EXACT MATCH
+        # ------------------------------------------------------------------
+        if wanted_norm in normalized:
+            found[key] = normalized[wanted_norm]
+            continue
+
+        # ------------------------------------------------------------------
+        # PREFIX MATCH
+        # ------------------------------------------------------------------
+        matches = [
+            c for c in raw.columns
+            if str(c).strip().lower().startswith(wanted_norm)
+        ]
+
+        if matches:
+            # Prefer the shortest match
+            matches.sort(key=len)
+            found[key] = matches[0]
+            continue
+
+        # ------------------------------------------------------------------
+        # OPTIONAL / REQUIRED
+        # ------------------------------------------------------------------
+        if require_target or key not in inference_optional:
             raise ValueError(
-                f"Required database column {key!r} ({wanted!r}) is missing. "
-                f"Available columns: {list(raw.columns)!r}"
+                f"Required database column {key!r} ({wanted!r}) is missing.\n"
+                f"Available columns:\n{list(raw.columns)}"
             )
+
     return found
 
 
