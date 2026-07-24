@@ -3,17 +3,51 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 import pandas as pd
+import torch
 
 DATA_VERSION = "fable-data-v4"
 ENCODINGS = ("utf-8", "utf-8-sig", "cp1252", "latin-1")
 _NUM = re.compile(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?")
 _DIM = re.compile(r"([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s*(µm|μm|um|mm|cm|m)?", re.I)
+RANDOM_STATE = 42
+
+
+def torch_device(local_rank: int | None = None) -> torch.device:
+    """Return the available CUDA device, or CPU when CUDA is unavailable."""
+    if not torch.cuda.is_available():
+        return torch.device("cpu")
+    rank = int(os.environ.get("LOCAL_RANK", "0")) if local_rank is None else local_rank
+    return torch.device(f"cuda:{rank % torch.cuda.device_count()}")
+
+
+def configure_torch(local_rank: int | None = None) -> torch.device:
+    """Seed PyTorch reproducibly and select the shared compute device."""
+    torch.manual_seed(RANDOM_STATE)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(RANDOM_STATE)
+        device = torch_device(local_rank)
+        torch.cuda.set_device(device)
+        return device
+    return torch.device("cpu")
+
+
+def empty_cuda_cache() -> None:
+    """Release unused CUDA allocations without failing on CPU-only hosts."""
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+
+def slurm_num_workers() -> int:
+    """Use the CPU allocation supplied by Slurm for PyTorch data loading."""
+    return max(0, int(os.environ.get("SLURM_CPUS_PER_TASK", "0")))
+
 
 COLUMNS = {
     "article": "Article (MLA)", "authors": "Authors", "doi": "DOI",

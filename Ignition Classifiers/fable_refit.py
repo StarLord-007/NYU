@@ -10,7 +10,8 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import StratifiedGroupKFold, StratifiedKFold
 
-from fable_common import DATA_VERSION, feature_manifest, load_data
+from fable_common import (DATA_VERSION, configure_torch, empty_cuda_cache,
+                          feature_manifest, load_data)
 from fable_models import make_model
 from fable_search import optimize_thresholds
 
@@ -79,6 +80,7 @@ def main() -> None:
     parser.add_argument("--out", required=True)
     parser.add_argument("--random-state", type=int, default=42)
     args = parser.parse_args()
+    configure_torch()
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     selection = json.loads(Path(args.selection).read_text(encoding="utf-8"))
@@ -92,6 +94,7 @@ def main() -> None:
     final_model.fit(
         df, df["ignition_binary"].to_numpy(), df["paper_id"].reset_index(drop=True))
     joblib.dump(final_model, out / "model.joblib", compress=3)
+    empty_cuda_cache()
     (out / "feature_manifest.json").write_text(
         json.dumps({"data_version": DATA_VERSION, "features": feature_manifest(),
                     "selected_feature_set": candidate["feature_set"]}, indent=2), encoding="utf-8")

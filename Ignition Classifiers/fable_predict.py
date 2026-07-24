@@ -8,7 +8,7 @@ from pathlib import Path
 import joblib
 import pandas as pd
 
-from fable_common import load_data
+from fable_common import configure_torch, empty_cuda_cache, load_data
 
 
 def main() -> None:
@@ -19,6 +19,7 @@ def main() -> None:
                         default="extrapolation")
     parser.add_argument("--artifact", help="Override the champion artifact directory.")
     args = parser.parse_args()
+    configure_torch()
     root = Path(__file__).resolve().parent
     artifact = (Path(args.artifact) if args.artifact else
                 root / "artifacts" / f"{args.champion}_champion")
@@ -32,6 +33,7 @@ def main() -> None:
     thresholds = json.loads((artifact / "thresholds.json").read_text(
         encoding="utf-8"))["thresholds"]
     probability = model.predict_proba(data)
+    empty_cuda_cache()
     output = pd.DataFrame({
         "row_id": data["row_id"], "paper_id": data["paper_id"],
         "paper_label": data["paper_label"],
