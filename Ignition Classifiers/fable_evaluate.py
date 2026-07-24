@@ -16,9 +16,11 @@ import yaml
 from scipy.stats import wilcoxon
 from sklearn.metrics import average_precision_score, brier_score_loss, roc_auc_score
 
-from fable_common import DATA_VERSION, load_data
+from fable_common import DATA_VERSION, configure_torch, empty_cuda_cache, load_data
 from fable_models import make_model
 from fable_search import THRESHOLD_NAMES, classification_metrics, nested_search
+
+MODEL_ID_TO_FAMILY = ("xgboost", "svm", "knn", "decision_tree", "mlp")
 
 
 def _load_candidates(path: str | Path) -> tuple[list[dict[str, Any]], int]:
@@ -171,10 +173,24 @@ def main() -> None:
     parser.add_argument("--search-iterations", type=int, default=40)
     parser.add_argument("--inner-group-folds", type=int, default=3)
     parser.add_argument("--bootstrap-iterations", type=int, default=2000)
+    parser.add_argument(
+        "--model-id", type=int, choices=range(len(MODEL_ID_TO_FAMILY)),
+        help="Run one model family: 0=XGBoost, 1=SVM, 2=KNN, 3=Decision Tree, 4=MLP",
+    )
     args = parser.parse_args()
+    configure_torch()
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     candidates, base_seed = _load_candidates(args.config)
+    indexed_candidates = list(enumerate(candidates))
+    if args.model_id is not None:
+        selected_family = MODEL_ID_TO_FAMILY[args.model_id]
+        indexed_candidates = [
+            (number, candidate) for number, candidate in indexed_candidates
+            if candidate["model_family"] == selected_family
+        ]
+        if not indexed_candidates:
+            raise ValueError(f"No configured candidates found for {selected_family}")
     df, data_report = load_data(args.data, require_target=True)
     split_dir = Path(args.splits)
     assignments = pd.read_parquet(split_dir / "split_assignments.parquet")
@@ -192,7 +208,7 @@ def main() -> None:
     explainability_rows, explained_candidates = [], set()
     protocol_status: dict[str, dict[str, Any]] = {}
     split_groups = list(assignments.groupby("split_id", sort=False))
-    for candidate_number, candidate in enumerate(candidates):
+    for selected_number, (candidate_number, candidate) in enumerate(indexed_candidates):
         candidate_id = candidate["candidate_id"]
         grouped_params_by_paper: dict[str, list[str]] = {}
         manifest_rows.append({
@@ -248,7 +264,7 @@ def main() -> None:
                 search = nested_search(
                     search_candidate, df.iloc[train].reset_index(drop=True), y_train,
                     df.iloc[train]["paper_id"].reset_index(drop=True), protocol,
-                    search_iterations, args.inner_group_folds, search_seed)
+                    search_iterations, args.inner_group_folds, search_seed, n_jobs=-1)
                 selected_params = (
                     frozen_lopo_params if frozen_lopo_params is not None
                     else search.selected_params)
@@ -322,7 +338,7 @@ def main() -> None:
                     model_id=candidate_id))
                 protocol_status[status_key]["completed_folds"] += 1
                 print(
-                    f"[{candidate_number + 1}/{len(candidates)}] {candidate_id} "
+                    f"[{selected_number + 1}/{len(indexed_candidates)}] {candidate_id} "
                     f"[{split_number + 1}/{len(split_groups)}] {split_id}: complete",
                     flush=True,
                 )
@@ -335,10 +351,12 @@ def main() -> None:
                     "traceback": traceback.format_exc(),
                 })
                 print(
-                    f"[{candidate_number + 1}/{len(candidates)}] {candidate_id} "
+                    f"[{selected_number + 1}/{len(indexed_candidates)}] {candidate_id} "
                     f"[{split_number + 1}/{len(split_groups)}] {split_id}: FAILED: {exc}",
                     flush=True,
                 )
+            finally:
+                empty_cuda_cache()
 
     predictions = pd.DataFrame(prediction_rows)
     fold_metrics = pd.DataFrame(metric_rows)
@@ -403,7 +421,10 @@ def main() -> None:
             json.dumps(failures, indent=2), encoding="utf-8")
     metadata = {
         "data_version": DATA_VERSION, "dataset_sha256": data_report["dataset_sha256"],
-        "candidate_count": len(candidates), "search_iterations": args.search_iterations,
+        "candidate_count": len(indexed_candidates), "search_iterations": args.search_iterations,
+        "model_id": args.model_id,
+        "model_family_filter": (MODEL_ID_TO_FAMILY[args.model_id]
+                                if args.model_id is not None else None),
         "inner_folds": args.inner_group_folds,
         "threshold_policy": {
             name: "selected exclusively from inner OOF predictions" for name in THRESHOLD_NAMES},

@@ -7,6 +7,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+from joblib import Parallel, delayed
 from sklearn.metrics import (average_precision_score, balanced_accuracy_score,
                              brier_score_loss, f1_score, matthews_corrcoef,
                              roc_auc_score)
@@ -120,25 +121,40 @@ def _inner_splits(X: pd.DataFrame, y: np.ndarray, papers: pd.Series,
     return list(splitter.split(X, y))
 
 
+def _fit_inner_fold(candidate: dict[str, Any], params: dict[str, Any],
+                    X: pd.DataFrame, y: np.ndarray, papers: pd.Series,
+                    protocol: str, seed: int, config_number: int, fold: int,
+                    train: np.ndarray, validation: np.ndarray
+                    ) -> tuple[int, np.ndarray, dict[str, float]]:
+    model = make_model(candidate, params, seed + config_number * 1000 + fold)
+    model.fit(X.iloc[train], y[train], papers.iloc[train])
+    probability = model.predict_proba(X.iloc[validation])
+    if len(np.unique(y[validation])) < 2:
+        raise ValueError(f"Inner fold {fold} for {protocol} contains one target class")
+    return fold, probability, classification_metrics(y[validation], probability, .5)
+
+
 def nested_search(candidate: dict[str, Any], X: pd.DataFrame, y: np.ndarray,
                   papers: pd.Series, protocol: str, iterations: int,
-                  inner_folds: int, seed: int) -> SearchResult:
+                  inner_folds: int, seed: int, n_jobs: int = -1) -> SearchResult:
     """Tune only on an outer training partition and freeze validation thresholds."""
     splits = _inner_splits(X, y, papers, protocol, inner_folds, seed)
     configs = _sample_configs(candidate, iterations, seed)
     histories, predictions_by_config = [], {}
+    # CPU families parallelize folds; GPU families already saturate their assigned device(s).
+    parallel_jobs = n_jobs if candidate["model_family"] in {"knn", "decision_tree"} else 1
     for config_number, params in enumerate(configs):
         oof = np.full(len(y), np.nan)
         fold_records = []
-        for fold, (train, validation) in enumerate(splits):
-            model = make_model(candidate, params, seed + config_number * 1000 + fold)
-            model.fit(X.iloc[train], y[train], papers.iloc[train])
-            probability = model.predict_proba(X.iloc[validation])
-            if len(np.unique(y[validation])) < 2:
-                raise ValueError(
-                    f"Inner fold {fold} for {protocol} contains one target class")
+        results = Parallel(n_jobs=parallel_jobs, prefer="threads")(
+            delayed(_fit_inner_fold)(
+                candidate, params, X, y, papers, protocol, seed, config_number,
+                fold, train, validation)
+            for fold, (train, validation) in enumerate(splits)
+        )
+        for fold, probability, metrics in results:
+            validation = splits[fold][1]
             oof[validation] = probability
-            metrics = classification_metrics(y[validation], probability, .5)
             fold_records.append(metrics)
             histories.append({
                 "configuration_id": config_number, "inner_fold": fold,
