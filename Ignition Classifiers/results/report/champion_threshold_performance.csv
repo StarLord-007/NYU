@@ -1,0 +1,9 @@
+champion,model_id,protocol,threshold_policy,threshold_mean,tp,fp,tn,fn,sensitivity,specificity,precision
+interpolation_champion,xgb_all_unweighted,interpolation_stratified,mcc,0.8060253710272295,8125,383,2932,2057,0.7979768218424671,0.8844645550527903,0.9549835448989187
+interpolation_champion,xgb_all_unweighted,interpolation_stratified,f1,0.38523802291051257,9534,1546,1769,648,0.9363582793164408,0.5336349924585219,0.8604693140794224
+interpolation_champion,xgb_all_unweighted,interpolation_stratified,balanced_accuracy,0.8774510202270407,7747,218,3097,2435,0.7608524847770576,0.934238310708899,0.97263025737602
+interpolation_champion,xgb_all_unweighted,interpolation_stratified,youden_j,0.8774510202270407,7747,218,3097,2435,0.7608524847770576,0.934238310708899,0.97263025737602
+extrapolation_champion,xgb_physics_unweighted,extrapolation_grouped,mcc,0.7809758952319856,7528,1401,1914,2654,0.7393439402867806,0.5773755656108597,0.8430955314144921
+extrapolation_champion,xgb_physics_unweighted,extrapolation_grouped,f1,0.20551707084528947,10012,3158,157,170,0.9833038695737576,0.0473604826546003,0.7602126044039483
+extrapolation_champion,xgb_physics_unweighted,extrapolation_grouped,balanced_accuracy,0.8427819629426337,6426,1046,2269,3756,0.6311137301119623,0.6844645550527904,0.8600107066381156
+extrapolation_champion,xgb_physics_unweighted,extrapolation_grouped,youden_j,0.8427819629426337,6426,1046,2269,3756,0.6311137301119623,0.6844645550527904,0.8600107066381156

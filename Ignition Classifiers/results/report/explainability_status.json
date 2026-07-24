@@ -1,0 +1,7 @@
+{
+  "success": true,
+  "model_id": "xgb_physics_unweighted",
+  "split_id": "extrapolation_grouped__seed-42__fold-0",
+  "held_out_rows": 837,
+  "held_out_papers": 17
+}

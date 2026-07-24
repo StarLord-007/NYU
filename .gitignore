@@ -3,3 +3,12 @@ __pycache__/
 artifacts/
 artifacts_v2/
 presentation/figures/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.joblib
+*.parquet
+
+# Large evaluation prediction artifacts
+Ignition Classifiers/results/evaluation/inner_oof_predictions.csv
+Ignition Classifiers/results/evaluation/outer_fold_predictions.csv

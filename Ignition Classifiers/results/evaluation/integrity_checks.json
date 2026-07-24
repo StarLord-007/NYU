@@ -1,0 +1,608 @@
+{
+  "passed": true,
+  "dataset_hash_matches_splits": true,
+  "protocol_status": [
+    {
+      "candidate_id": "xgb_all_unweighted",
+      "protocol": "interpolation_holdout",
+      "expected_folds": 3,
+      "completed_folds": 3,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "xgb_all_unweighted",
+      "protocol": "interpolation_stratified",
+      "expected_folds": 15,
+      "completed_folds": 15,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "xgb_all_unweighted",
+      "protocol": "extrapolation_grouped",
+      "expected_folds": 15,
+      "completed_folds": 15,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "xgb_all_unweighted",
+      "protocol": "lopo",
+      "expected_folds": 85,
+      "completed_folds": 85,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "xgb_physics_unweighted",
+      "protocol": "interpolation_holdout",
+      "expected_folds": 3,
+      "completed_folds": 3,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "xgb_physics_unweighted",
+      "protocol": "interpolation_stratified",
+      "expected_folds": 15,
+      "completed_folds": 15,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "xgb_physics_unweighted",
+      "protocol": "extrapolation_grouped",
+      "expected_folds": 15,
+      "completed_folds": 15,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "xgb_physics_unweighted",
+      "protocol": "lopo",
+      "expected_folds": 85,
+      "completed_folds": 85,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "xgb_all_class_paper_weighted",
+      "protocol": "interpolation_holdout",
+      "expected_folds": 3,
+      "completed_folds": 3,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "xgb_all_class_paper_weighted",
+      "protocol": "interpolation_stratified",
+      "expected_folds": 15,
+      "completed_folds": 15,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "xgb_all_class_paper_weighted",
+      "protocol": "extrapolation_grouped",
+      "expected_folds": 15,
+      "completed_folds": 15,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "xgb_all_class_paper_weighted",
+      "protocol": "lopo",
+      "expected_folds": 85,
+      "completed_folds": 85,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "xgb_physics_class_paper_weighted_monotone_o2",
+      "protocol": "interpolation_holdout",
+      "expected_folds": 3,
+      "completed_folds": 3,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "xgb_physics_class_paper_weighted_monotone_o2",
+      "protocol": "interpolation_stratified",
+      "expected_folds": 15,
+      "completed_folds": 15,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "xgb_physics_class_paper_weighted_monotone_o2",
+      "protocol": "extrapolation_grouped",
+      "expected_folds": 15,
+      "completed_folds": 15,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "xgb_physics_class_paper_weighted_monotone_o2",
+      "protocol": "lopo",
+      "expected_folds": 85,
+      "completed_folds": 85,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "xgb_all_focal_class_paper_weighted",
+      "protocol": "interpolation_holdout",
+      "expected_folds": 3,
+      "completed_folds": 3,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "xgb_all_focal_class_paper_weighted",
+      "protocol": "interpolation_stratified",
+      "expected_folds": 15,
+      "completed_folds": 15,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "xgb_all_focal_class_paper_weighted",
+      "protocol": "extrapolation_grouped",
+      "expected_folds": 15,
+      "completed_folds": 15,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "xgb_all_focal_class_paper_weighted",
+      "protocol": "lopo",
+      "expected_folds": 85,
+      "completed_folds": 85,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "xgb_physics_focal_class_paper_weighted",
+      "protocol": "interpolation_holdout",
+      "expected_folds": 3,
+      "completed_folds": 3,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "xgb_physics_focal_class_paper_weighted",
+      "protocol": "interpolation_stratified",
+      "expected_folds": 15,
+      "completed_folds": 15,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "xgb_physics_focal_class_paper_weighted",
+      "protocol": "extrapolation_grouped",
+      "expected_folds": 15,
+      "completed_folds": 15,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "xgb_physics_focal_class_paper_weighted",
+      "protocol": "lopo",
+      "expected_folds": 85,
+      "completed_folds": 85,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "xgb_physics_paper_bagging",
+      "protocol": "interpolation_holdout",
+      "expected_folds": 3,
+      "completed_folds": 3,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "xgb_physics_paper_bagging",
+      "protocol": "interpolation_stratified",
+      "expected_folds": 15,
+      "completed_folds": 15,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "xgb_physics_paper_bagging",
+      "protocol": "extrapolation_grouped",
+      "expected_folds": 15,
+      "completed_folds": 15,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "xgb_physics_paper_bagging",
+      "protocol": "lopo",
+      "expected_folds": 85,
+      "completed_folds": 85,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "knn_all",
+      "protocol": "interpolation_holdout",
+      "expected_folds": 3,
+      "completed_folds": 3,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "knn_all",
+      "protocol": "interpolation_stratified",
+      "expected_folds": 15,
+      "completed_folds": 15,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "knn_all",
+      "protocol": "extrapolation_grouped",
+      "expected_folds": 15,
+      "completed_folds": 15,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "knn_all",
+      "protocol": "lopo",
+      "expected_folds": 85,
+      "completed_folds": 85,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "knn_physics",
+      "protocol": "interpolation_holdout",
+      "expected_folds": 3,
+      "completed_folds": 3,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "knn_physics",
+      "protocol": "interpolation_stratified",
+      "expected_folds": 15,
+      "completed_folds": 15,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "knn_physics",
+      "protocol": "extrapolation_grouped",
+      "expected_folds": 15,
+      "completed_folds": 15,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "knn_physics",
+      "protocol": "lopo",
+      "expected_folds": 85,
+      "completed_folds": 85,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "decision_tree_all",
+      "protocol": "interpolation_holdout",
+      "expected_folds": 3,
+      "completed_folds": 3,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "decision_tree_all",
+      "protocol": "interpolation_stratified",
+      "expected_folds": 15,
+      "completed_folds": 15,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "decision_tree_all",
+      "protocol": "extrapolation_grouped",
+      "expected_folds": 15,
+      "completed_folds": 15,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "decision_tree_all",
+      "protocol": "lopo",
+      "expected_folds": 85,
+      "completed_folds": 85,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "decision_tree_physics",
+      "protocol": "interpolation_holdout",
+      "expected_folds": 3,
+      "completed_folds": 3,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "decision_tree_physics",
+      "protocol": "interpolation_stratified",
+      "expected_folds": 15,
+      "completed_folds": 15,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "decision_tree_physics",
+      "protocol": "extrapolation_grouped",
+      "expected_folds": 15,
+      "completed_folds": 15,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "decision_tree_physics",
+      "protocol": "lopo",
+      "expected_folds": 85,
+      "completed_folds": 85,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "mlp_all",
+      "protocol": "interpolation_holdout",
+      "expected_folds": 3,
+      "completed_folds": 3,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "mlp_all",
+      "protocol": "interpolation_stratified",
+      "expected_folds": 15,
+      "completed_folds": 15,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "mlp_all",
+      "protocol": "extrapolation_grouped",
+      "expected_folds": 15,
+      "completed_folds": 15,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "mlp_all",
+      "protocol": "lopo",
+      "expected_folds": 85,
+      "completed_folds": 85,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "mlp_physics",
+      "protocol": "interpolation_holdout",
+      "expected_folds": 3,
+      "completed_folds": 3,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "mlp_physics",
+      "protocol": "interpolation_stratified",
+      "expected_folds": 15,
+      "completed_folds": 15,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "mlp_physics",
+      "protocol": "extrapolation_grouped",
+      "expected_folds": 15,
+      "completed_folds": 15,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "mlp_physics",
+      "protocol": "lopo",
+      "expected_folds": 85,
+      "completed_folds": 85,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "svm_all",
+      "protocol": "interpolation_holdout",
+      "expected_folds": 3,
+      "completed_folds": 3,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "svm_all",
+      "protocol": "interpolation_stratified",
+      "expected_folds": 15,
+      "completed_folds": 15,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "svm_all",
+      "protocol": "extrapolation_grouped",
+      "expected_folds": 15,
+      "completed_folds": 15,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "svm_all",
+      "protocol": "lopo",
+      "expected_folds": 85,
+      "completed_folds": 85,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "svm_physics",
+      "protocol": "interpolation_holdout",
+      "expected_folds": 3,
+      "completed_folds": 3,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "svm_physics",
+      "protocol": "interpolation_stratified",
+      "expected_folds": 15,
+      "completed_folds": 15,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "svm_physics",
+      "protocol": "extrapolation_grouped",
+      "expected_folds": 15,
+      "completed_folds": 15,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    },
+    {
+      "candidate_id": "svm_physics",
+      "protocol": "lopo",
+      "expected_folds": 85,
+      "completed_folds": 85,
+      "valid_probabilities": true,
+      "passed": true,
+      "errors": [],
+      "complete": true
+    }
+  ],
+  "failures": [],
+  "failed_result_policy": "Failed candidate/protocol results are excluded from result tables."
+}

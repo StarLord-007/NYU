@@ -1,722 +1,419 @@
-"""
-fable_common.py
-===============
-Shared data loading, cleaning, feature engineering and grouping logic for the
-Fable pipeline (fable_audit.py / fable_train.py / fable_eval.py).
-
-This module fixes three data-integrity problems found during the audit of
-``xgb_ignition_model_2.py`` + ``database_xgb.csv``:
-
-1. **Corrupted DOI groups.** In ``database_xgb.csv`` the DOI cell of at least
-   one 400+-row paper was Excel-autofilled (``...103989, ...103990, ...``),
-   creating one fake "paper" per row. Group-by-DOI CV run on that file
-   scattered rows of the same paper across folds, so the previously reported
-   grouped ROC-AUC (0.678) was still partially contaminated.
-
-2. **Citation-string aliases.** Six physical papers appear under two
-   different citation strings (curly vs straight quotes, "et al." vs full
-   author lists). Grouping by Article+Authors+DOI therefore splits one
-   physical paper into two groups. We canonicalise the paper identifier:
-   normalised DOI when present, otherwise a normalised article string.
-
-3. **Encoding.** The latest CSV is cp1252-encoded; the old loader assumed
-   UTF-8 and crashes on it.
-
-Feature engineering mirrors the v2 script (so results remain comparable) but
-every feature is registered with a *role* tag:
-
-* ``physics``    — variables with absolute physical meaning that should
-                   transfer across papers (O2 fraction, pressure, flow, ...).
-* ``apparatus``  — descriptors of the experimental rig / campaign that are
-                   highly paper-specific and are candidates for removal in
-                   the domain-generalisation ablation (chamber dimensions,
-                   facility, ignition hardware settings, ...).
-
-Nothing in this module touches model training; it is pure data logic.
-"""
-
+"""Canonical data loading and feature engineering for ignition classification."""
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
 
-# ---------------------------------------------------------------------------
-# Parsing utilities (carried over from xgb_ignition_model_2.py, unchanged
-# physics, with small robustness fixes)
-# ---------------------------------------------------------------------------
+DATA_VERSION = "fable-data-v4"
+ENCODINGS = ("utf-8", "utf-8-sig", "cp1252", "latin-1")
+_NUM = re.compile(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?")
+_DIM = re.compile(r"([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s*(µm|μm|um|mm|cm|m)?", re.I)
 
-_NUM_RE = re.compile(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?")
-
-
-def _clean_text(x):
-    if pd.isna(x):
-        return np.nan
-    if not isinstance(x, str):
-        return x
-    s = x.replace("\u00a0", " ").strip()
-    s = re.sub(r"\s+", " ", s)
-    return s if s.lower() not in {"", "-", "n/a", "na", "nan", "none"} else np.nan
-
-
-def _first_number(x):
-    if pd.isna(x):
-        return np.nan
-    if isinstance(x, (int, float, np.integer, np.floating)):
-        return float(x)
-    s = str(x).replace(",", ".").replace("\u2212", "-")
-    m = _NUM_RE.search(s)
-    return float(m.group(0)) if m else np.nan
-
-
-def parse_oxygen_fraction(x):
-    v = _first_number(x)
-    if pd.isna(v):
-        return np.nan
-    return v / 100.0 if v > 1.0 else v
-
-
-def parse_pressure_kpa(x):
-    v = _first_number(x)
-    if pd.isna(v):
-        return np.nan
-    s = str(x).lower() if not isinstance(x, (int, float, np.integer, np.floating)) else ""
-    if "mpa" in s:
-        return v * 1000.0
-    if "atm" in s:
-        return v * 101.325
-    if "psia" in s or re.search(r"\bpsi\b", s):
-        return v * 6.894757
-    if "kpa" in s:
-        return v
-    if "pa" in s:
-        return v / 1000.0
-    return v
-
-
-def parse_flow_mm_s(x):
-    v = _first_number(x)
-    if pd.isna(v):
-        return np.nan
-    s = str(x).lower() if not isinstance(x, (int, float, np.integer, np.floating)) else ""
-    if "cm/s" in s:
-        return v * 10.0
-    if "m/s" in s and "mm/s" not in s and "cm/s" not in s:
-        return v * 1000.0
-    return v
-
-
-def parse_gravity_g(x):
-    if pd.isna(x):
-        return np.nan
-    v = _first_number(x)
-    s = str(x).lower().replace("\u00b2", "2")
-    if pd.isna(v):
-        if "micro" in s or "\u00b5g" in s or "\u03bcg" in s:
-            return 1e-6
-        return np.nan
-    if "cm/s2" in s or "cm/s^2" in s:
-        return v / 981.0
-    if "mm/s2" in s or "mm/s^2" in s:
-        return v / 9810.0
-    if "m/s2" in s or "m/s^2" in s:
-        return v / 9.81
-    return v
-
-
-def parse_watts(x):
-    if pd.isna(x):
-        return np.nan
-    s = str(x).lower()
-    if "w/cm" in s or "kw/m" in s or re.search(r"\ba\b|amp|current", s):
-        return np.nan
-    return _first_number(x)
-
-
-def parse_seconds(x):
-    return _first_number(x)
-
-
-def _unit_to_mm(unit):
-    if not unit:
-        return 1.0
-    u = unit.lower().replace("\u03bc", "\u00b5")
-    if u in {"\u00b5m", "um"}:
-        return 0.001
-    if u == "cm":
-        return 10.0
-    if u == "m":
-        return 1000.0
-    return 1.0
-
-
-_DIM_TOKEN = re.compile(
-    r"([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s*(\u00b5m|\u03bcm|um|mm|cm|m)?",
-    flags=re.IGNORECASE,
-)
-
-
-def extract_dimensions_mm(text):
-    if pd.isna(text):
-        return []
-    s = str(text).replace(",", ".").replace("\u00d7", "x").replace("\u00d8", "diameter ")
-    return [float(num) * _unit_to_mm(unit) for num, unit in _DIM_TOKEN.findall(s)]
-
-
-def parse_core_outer(text):
-    if pd.isna(text):
-        return np.nan, np.nan, np.nan
-    s = str(text).replace(",", ".").replace("\u00d7", "x").lower()
-    core = outer = np.nan
-    m = re.search(
-        r"([-+]?\d*\.?\d+)\s*(\u00b5m|\u03bcm|um|mm|cm|m)?\s*(?:diameter\s*)?(?:core|inner)", s
-    )
-    if not m:
-        m = re.search(
-            r"(?:core|inner)\D{0,20}([-+]?\d*\.?\d+)\s*(\u00b5m|\u03bcm|um|mm|cm|m)?", s
-        )
-    if m:
-        core = float(m.group(1)) * _unit_to_mm(m.group(2))
-    m = re.search(
-        r"([-+]?\d*\.?\d+)\s*(\u00b5m|\u03bcm|um|mm|cm|m)?\s*(?:diameter\s*)?(?:outer|outside)", s
-    )
-    if not m:
-        m = re.search(
-            r"(?:outer|outside)\D{0,20}([-+]?\d*\.?\d+)\s*(\u00b5m|\u03bcm|um|mm|cm|m)?", s
-        )
-    if m:
-        outer = float(m.group(1)) * _unit_to_mm(m.group(2))
-    thickness = (
-        (outer - core) / 2.0 if pd.notna(core) and pd.notna(outer) and outer >= core else np.nan
-    )
-    return core, outer, thickness
-
-
-# ---------- Categorical normalisation ----------
-
-def normalise_geometry(x):
-    s = _clean_text(x)
-    if pd.isna(s):
-        return "Unknown"
-    l = str(s).lower()
-    if "wire" in l:
-        return "Wire"
-    if "flat" in l:
-        return "Flat"
-    if "cyl" in l:
-        return "Cylindrical"
-    if "spher" in l:
-        return "Spherical"
-    if "chunk" in l:
-        return "Chunk"
-    return "Other"
-
-
-def normalise_internal_geometry(x):
-    s = _clean_text(x)
-    if pd.isna(s):
-        return "Unknown"
-    l = str(s).lower()
-    if "rect" in l:
-        return "Rectangular"
-    if "cyl" in l or "circular" in l or "annular" in l:
-        return "Cylindrical"
-    return "Other"
-
-
-def normalise_ignition_method(x):
-    s = _clean_text(x)
-    if pd.isna(s):
-        return "Unknown"
-    l = str(s).lower()
-    if "open flame" in l or "pilot" in l or "match" in l:
-        return "Open Flame"
-    if "radiative" in l or "heater" in l:
-        return "Radiative Heater"
-    if "discharge" in l or "high-voltage" in l:
-        return "Discharge"
-    if "wire" in l or "coil" in l or "nicr" in l or "electric" in l:
-        return "Wire / Coil"
-    return "Other"
-
-
-def flow_direction(v):
-    if pd.isna(v):
-        return "Unknown"
-    if v > 0:
-        return "Coflow"
-    if v < 0:
-        return "Counterflow"
-    return "Quiescent"
-
-
-def gravity_regime(g):
-    if pd.isna(g):
-        return "Unknown"
-    if g < 1e-3:
-        return "Microgravity"
-    if g < 0.95:
-        return "Partial"
-    if g <= 1.05:
-        return "Earth"
-    return "Hyper"
-
-
-def material_family(x):
-    s = str(x).lower() if not pd.isna(x) else ""
-    if "ldpe" in s or "low-density polyethylene" in s:
-        return "LDPE"
-    if "hdpe" in s or "high-density polyethylene" in s:
-        return "HDPE"
-    if "etfe" in s:
-        return "ETFE"
-    if "pmma" in s or "organic glass" in s:
-        return "PMMA"
-    if re.search(r"\bpe\b|polyethylene", s):
-        return "PE"
-    if "cellulos" in s or "kimwipe" in s or "tissue" in s or "paper" in s or "cotton" in s:
-        return "Cellulosic"
-    if "nomex" in s:
-        return "Nomex"
-    if "kapton" in s:
-        return "Kapton"
-    if "kevlar" in s:
-        return "Kevlar"
-    if "polycarbonate" in s:
-        return "Polycarbonate"
-    if "silicone" in s:
-        return "Silicone"
-    if "peek" in s:
-        return "PEEK"
-    if "ppsu" in s:
-        return "PPSU"
-    if "conex" in s:
-        return "Conex"
-    if "sibal" in s:
-        return "SIBAL"
-    if s.strip() in {"", "nan"}:
-        return "Unknown"
-    return "Other"
-
-
-def core_material(x):
-    s = str(x).lower() if not pd.isna(x) else ""
-    if "nicr" in s or "nichrome" in s:
-        return "NiCr"
-    if re.search(r"\bcu\b|copper", s):
-        return "Copper"
-    if "stainless" in s or re.search(r"\bss\b", s):
-        return "Stainless steel"
-    if "steel" in s:
-        return "Steel"
-    if "iron" in s or re.search(r"\bfe\b", s):
-        return "Iron"
-    return "None / NA"
-
-
-def normalise_yes_no(x):
-    s = _clean_text(x)
-    if pd.isna(s):
-        return np.nan
-    l = str(s).lower().strip()
-    if l in {"yes", "y", "1", "true"}:
-        return 1
-    if l in {"no", "n", "0", "false"}:
-        return 0
-    return np.nan
-
-
-# ---------------------------------------------------------------------------
-# Canonical paper identity
-# ---------------------------------------------------------------------------
-
-def canonical_doi(x) -> str | float:
-    """Normalise a DOI string so formatting variants collapse to one token."""
-    s = _clean_text(x)
-    if pd.isna(s):
-        return np.nan
-    s = str(s).strip().lower()
-    s = re.sub(r"^https?://(dx\.)?doi\.org/", "", s)
-    s = re.sub(r"^doi:\s*", "", s)
-    s = s.rstrip("/. ")
-    return s if s else np.nan
-
-
-def canonical_article(x) -> str | float:
-    """Normalise a citation string: case, whitespace, quote style, punctuation."""
-    s = _clean_text(x)
-    if pd.isna(s):
-        return np.nan
-    s = str(s).lower()
-    # unify curly quotes/dashes, drop all punctuation, collapse whitespace
-    s = (
-        s.replace("\u201c", '"').replace("\u201d", '"')
-        .replace("\u2018", "'").replace("\u2019", "'")
-        .replace("\u2013", "-").replace("\u2014", "-")
-    )
-    s = re.sub(r"[^a-z0-9 ]+", " ", s)
-    s = re.sub(r"\s+", " ", s).strip()
-    return s if s else np.nan
-
-
-# ---------------------------------------------------------------------------
-# Column registry for Microgravity_Database_reduced.csv
-# ---------------------------------------------------------------------------
-
-COLS = {
-    "article": "Article (MLA)",
-    "authors": "Authors",
-    "doi": "DOI",
-    "geometry": "Geometry of Sample (flat, wire, or Cylindrical)",
-    "dimensions": (
-        "Dimensions of sample (Wire is in diameter, Cylindrical is in length x radius x "
-        "thickness, Rectangle is in length x width x height, Shperical)"
-    ),
-    "fuel_density": "fuel_density_kg_m3",
-    "fuel_k": "fuel_k_W_mK",
-    "fuel_cp": "fuel_cp_J_kgK",
-    "fuel_pyroTemp": "fuel_pyrolysis_T_K",
-    "fuel_alpha": "fuel_alpha_m2_s",
-    "core_density": "core_density_kg_m3",
-    "core_k": "core_k_W_mK",
-    "core_cp": "core_cp_J_kgK",
-    "o2": "Oxygen Concentration",
-    "diluent": "diluent",
-    "gas_molar_mass": "gas_M",
-    "gas_cp": "gas_cp_mass",
-    "gas_k": "gas_k",
-    "gas_density": "gas_density_kg_m3",
-    "gas_alpha": "gas_alpha_m2_s",
-    "gas_nu": "gas_nu_m2_s",
-    "pressure": "Pressure",
-    "flow": "Flow Velocity (Co flow is + and counter flow is -)",
-    "internal_geom": "Internal geometry (Cylindrical , rectangular)",
-    "internal_dims": "Internal Dimensions",
-    "gravity": "Gravity (g/gearth)",
-    "ig_method": "Ignition method (Wire, open flame, or Radiative Heater)",
-    "ig_power": "Ignition power (W)",
-    "ig_time": "Ignition time (s)",
-    "ignition": "Ignition (Yes/No)",
+COLUMNS = {
+    "article": "Article (MLA)", "authors": "Authors", "doi": "DOI",
+    "geometry": "Geometry of Sample", "dimensions": "Dimensions of sample",
+    "fuel_density": "fuel_density_kg_m3", "fuel_k": "fuel_k_W_mK",
+    "fuel_cp": "fuel_cp_J_kgK", "fuel_pyrolysis": "fuel_pyrolysis_T_K",
+    "fuel_alpha": "fuel_alpha_m2_s", "core_density": "core_density_kg_m3",
+    "core_k": "core_k_W_mK", "core_cp": "core_cp_J_kgK",
+    "oxygen": "Oxygen Concentration", "diluent": "diluent", "gas_m": "gas_M",
+    "gas_cp": "gas_cp_mass", "gas_k": "gas_k", "gas_density": "gas_density_kg_m3",
+    "gas_alpha": "gas_alpha_m2_s", "gas_nu": "gas_nu_m2_s", "pressure": "Pressure",
+    "flow": "Flow Velocity", "internal_geometry": "Internal Geometry",
+    "internal_dimensions": "Internal Dimensions", "gravity": "Gravity",
+    "facility": "Facility", "ignition_method": "Ignition Method",
+    "ignition_power": "Ignition Power", "ignition_time": "Ignition Time",
+    "target": "Ignition",
 }
+POST_OUTCOME_COLUMNS = ("Flame Length", "FSR", "HRR", "Smoke/ Areosols")
 
-POST_IGNITION_LEAKS = [
-    "Flame Length",
-    "FSR (Flame Spread Rate)",
-    "HRR (Heat release rate)",
-    "Smoke/ Areosols (yes/no)",
-]
-
-
-def _read_csv_any_encoding(path: Path) -> pd.DataFrame:
-    for enc in ("utf-8", "cp1252", "latin-1"):
-        try:
-            return pd.read_csv(path, skiprows=1, encoding=enc)
-        except UnicodeDecodeError:
-            continue
-    raise UnicodeDecodeError("all", b"", 0, 1, f"Could not decode {path}")
-
-
-def _resolve_columns(raw: pd.DataFrame) -> dict:
-    """Map the logical column registry onto whatever header variant the file has."""
-    cols = {}
-    available = {c.lower().strip(): c for c in raw.columns if isinstance(c, str)}
-    fallbacks = {
-        "article": ["article (mla)", "article"],
-        "dimensions": None,  # matched by prefix below
-    }
-    for key, name in COLS.items():
-        if name in raw.columns:
-            cols[key] = name
-            continue
-        if key in fallbacks and fallbacks[key]:
-            for cand in fallbacks[key]:
-                if cand in available:
-                    cols[key] = available[cand]
-                    break
-            if key in cols:
-                continue
-        # prefix matching for the long free-text headers
-        prefix = name.split("(")[0].strip().lower()
-        hits = [c for c in raw.columns if isinstance(c, str) and c.lower().startswith(prefix)]
-        if len(hits) == 1:
-            cols[key] = hits[0]
-        elif key == "authors" and "authors" in available:
-            cols[key] = available["authors"]
-        else:
-            raise KeyError(f"Cannot resolve column for '{key}' (wanted: {name!r})")
-    return cols
-
-
-# ---------------------------------------------------------------------------
-# Feature registry
-# ---------------------------------------------------------------------------
-# role: "physics"    -> absolute physical meaning, expected to transfer
-#       "apparatus"  -> rig / campaign descriptor, paper-fingerprint candidate
 NUMERIC_FEATURES = {
-    "fuel_density_kg_m3": "physics",
-    "fuel_k_w_mk": "physics",
-    "fuel_cp_j_kgk": "physics",
-    "fuel_pyroTemp": "physics",
-    "fuel_alpha": "physics",
-    "core_density_kg_m3": "physics",
-    "core_k_w_mk": "physics",
-    "core_cp_j_kgk": "physics",
-    "oxygen_fraction": "physics",
-    "gas_molar_mass": "physics",
-    "gas_cp_j_kgk": "physics",
-    "gas_k_w_mk": "physics",
-    "gas_density_kg_m3": "physics",
-    "gas_alpha_m2_s": "physics",
-    "gas_nu_m2_s": "physics",
-    "pressure_kpa": "physics",
-    "flow_velocity_mm_s": "physics",
-    "flow_speed_abs_mm_s": "physics",
-    "gravity_g": "physics",
-    "log10_gravity_g": "physics",
-    "ignition_power_w": "apparatus",
-    "ignition_time_s": "apparatus",
-    "ignition_energy_j": "apparatus",
-    "sample_dim_1_mm": "apparatus",
-    "sample_dim_2_mm": "apparatus",
-    "sample_dim_3_mm": "apparatus",
-    "sample_dim_min_mm": "apparatus",
-    "sample_dim_max_mm": "apparatus",
-    "sample_dim_mean_mm": "apparatus",
-    "sample_dim_count": "apparatus",
-    "core_diameter_mm": "apparatus",
-    "outer_diameter_mm": "apparatus",
-    "insulation_thickness_mm": "apparatus",
-    "internal_dim_1_mm": "apparatus",
-    "internal_dim_2_mm": "apparatus",
-    "internal_dim_3_mm": "apparatus",
+    "fuel_density_kg_m3": "physics", "fuel_k_w_mk": "physics",
+    "fuel_cp_j_kgk": "physics", "fuel_pyrolysis_t_k": "physics",
+    "fuel_alpha_m2_s": "physics", "core_density_kg_m3": "physics",
+    "core_k_w_mk": "physics", "core_cp_j_kgk": "physics",
+    "oxygen_fraction": "physics", "gas_molar_mass": "physics",
+    "gas_cp_j_kgk": "physics", "gas_k_w_mk": "physics",
+    "gas_density_kg_m3": "physics", "gas_alpha_m2_s": "physics",
+    "gas_nu_m2_s": "physics", "pressure_kpa": "physics",
+    "flow_velocity_mm_s": "physics", "flow_speed_abs_mm_s": "physics",
+    "gravity_g": "physics", "log10_gravity_g": "physics",
+    "ignition_power_w": "apparatus", "ignition_time_s": "apparatus",
+    "ignition_energy_j": "apparatus", "sample_dim_1_mm": "apparatus",
+    "sample_dim_2_mm": "apparatus", "sample_dim_3_mm": "apparatus",
+    "sample_dim_min_mm": "apparatus", "sample_dim_max_mm": "apparatus",
+    "sample_dim_mean_mm": "apparatus", "sample_dim_count": "apparatus",
+    "core_diameter_mm": "apparatus", "outer_diameter_mm": "apparatus",
+    "insulation_thickness_mm": "apparatus", "internal_dim_1_mm": "apparatus",
+    "internal_dim_2_mm": "apparatus", "internal_dim_3_mm": "apparatus",
     "internal_dim_mean_mm": "apparatus",
 }
-
 CATEGORICAL_FEATURES = {
-    "geometry_cat": "physics",
-    "internal_geom_cat": "apparatus",
-    "ig_method_cat": "apparatus",
-    "diluent_cat": "physics",
-    "flow_direction": "physics",
-    "gravity_regime": "physics",
+    "geometry_cat": "physics", "diluent_cat": "physics",
+    "flow_direction_cat": "physics", "gravity_regime_cat": "physics",
+    "internal_geometry_cat": "apparatus", "facility_cat": "apparatus",
+    "ignition_method_cat": "apparatus",
 }
 
-ALL_NUMERIC = list(NUMERIC_FEATURES)
-ALL_CATEGORICAL = list(CATEGORICAL_FEATURES)
-PHYSICS_NUMERIC = [k for k, v in NUMERIC_FEATURES.items() if v == "physics"]
-PHYSICS_CATEGORICAL = [k for k, v in CATEGORICAL_FEATURES.items() if v == "physics"]
+
+def _text(value: Any) -> str | float:
+    if pd.isna(value):
+        return np.nan
+    value = re.sub(r"\s+", " ", str(value).replace("\xa0", " ").strip())
+    return np.nan if value.lower() in {"", "-", "na", "n/a", "nan", "none"} else value
 
 
-def _group_rare(series, min_count=10, label="Other / Rare"):
-    vc = series.value_counts(dropna=False)
-    return series.where(series.map(vc) >= min_count, label)
+def _number(value: Any) -> float:
+    if pd.isna(value):
+        return np.nan
+    match = _NUM.search(str(value).replace(",", ".").replace("−", "-"))
+    return float(match.group()) if match else np.nan
 
 
-# ---------------------------------------------------------------------------
-# Main loader
-# ---------------------------------------------------------------------------
+def _factor(unit: str) -> float:
+    return {"µm": .001, "μm": .001, "um": .001, "cm": 10., "m": 1000.}.get(
+        (unit or "mm").lower(), 1.)
 
-def load_clean(data_path: str | Path, dedupe: bool = True) -> pd.DataFrame:
-    """Load the latest CSV and return a clean feature frame.
 
-    Returns a DataFrame with engineered features, the binary target
-    ``ignition_binary``, and identity columns:
+def dimensions_mm(value: Any) -> list[float]:
+    if pd.isna(value):
+        return []
+    text = str(value).replace(",", ".").replace("×", "x").replace("Ø", " diameter ")
+    return [float(number) * _factor(unit) for number, unit in _DIM.findall(text)]
 
-    * ``paper_id``       — canonical physical-paper identifier (normalised DOI,
-                           falling back to normalised citation string).
-    * ``paper_label``    — short human-readable label for reporting.
-    * ``raw_citation``   — original Article string (audit only, never a feature).
-    The reduced database no longer includes the legacy rig-name or free-text
-    material columns; it supplies fuel/core/gas physical properties instead.
+
+def pressure_kpa(value: Any) -> float:
+    number, text = _number(value), str(value).lower()
+    if pd.isna(number):
+        return np.nan
+    if "mpa" in text: return number * 1000
+    if "atm" in text: return number * 101.325
+    if "psi" in text: return number * 6.894757
+    if "pa" in text and "kpa" not in text and "mpa" not in text: return number / 1000
+    return number
+
+
+def flow_mm_s(value: Any) -> float:
+    number, text = _number(value), str(value).lower()
+    if pd.isna(number):
+        return np.nan
+    if "cm/s" in text: return number * 10
+    if "m/s" in text and "mm/s" not in text and "cm/s" not in text: return number * 1000
+    return number
+
+
+def gravity_g(value: Any) -> float:
+    text, number = str(value).lower().replace("²", "2"), _number(value)
+    if pd.isna(number):
+        return 1e-6 if any(x in text for x in ("micro", "µg", "μg")) else np.nan
+    if "cm/s2" in text or "cm/s^2" in text: return number / 981
+    if "mm/s2" in text or "mm/s^2" in text: return number / 9810
+    if "m/s2" in text or "m/s^2" in text: return number / 9.81
+    return number
+
+
+def oxygen_fraction(value: Any) -> float:
+    number = _number(value)
+    return number / 100 if pd.notna(number) and number > 1 else number
+
+
+def watts(value: Any) -> float:
+    text = str(value).lower()
+    return np.nan if any(x in text for x in ("w/cm", "kw/m", "amp", "current")) else _number(value)
+
+
+def _category(value: Any, mapping: dict[str, tuple[str, ...]]) -> str:
+    text = str(_text(value)).lower()
+    if text == "nan":
+        return "Unknown"
+    for label, words in mapping.items():
+        if any(word in text for word in words):
+            return label
+    return "Other"
+
+
+def canonical_doi(value: Any) -> str | float:
+    """Return a normalized true DOI; non-DOI URLs fall back to citation identity."""
+    value = _text(value)
+    if pd.isna(value):
+        return np.nan
+    text = re.sub(r"^(https?://(dx\.)?doi\.org/|doi:\s*)", "", str(value).lower()).rstrip("/. ")
+    match = re.search(r"10\.\d{4,9}/[-._;()/:a-z0-9]+", text, re.I)
+    return match.group().rstrip(".,;") if match else np.nan
+
+
+def canonical_citation(value: Any) -> str | float:
+    value = _text(value)
+    if pd.isna(value):
+        return np.nan
+    text = str(value).lower().translate(str.maketrans({"\u201c": '"', "\u201d": '"', "\u2019": "'", "\u2013": "-", "\u2014": "-"}))
+    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9 ]+", " ", text)).strip()
+
+
+def _resolve(raw: pd.DataFrame, require_target: bool) -> dict[str, str]:
     """
-    data_path = Path(data_path)
-    raw = _read_csv_any_encoding(data_path)
-    raw.columns = [c.strip() if isinstance(c, str) else c for c in raw.columns]
-    cols = _resolve_columns(raw)
+    Resolve database columns robustly.
 
-    drop = [c for c in raw.columns if str(c).startswith("Unnamed")] + [
-        c for c in POST_IGNITION_LEAKS if c in raw.columns
-    ]
-    raw = raw.drop(columns=drop)
-    for c in raw.columns:
-        if raw[c].dtype == "object":
-            raw[c] = raw[c].map(_clean_text)
+    Rules:
+    1. Target ("Ignition") MUST match exactly.
+    2. All other columns:
+       - prefer exact match;
+       - otherwise accept headers that start with the expected name
+         (e.g. "Pressure (kPa)", "Ignition Power (W)").
+    """
+    found: dict[str, str] = {}
+    inference_optional = {"article", "authors", "doi", "target"}
 
+    # Map normalized header -> original header
+    normalized = {
+        str(c).strip().lower(): c
+        for c in raw.columns
+    }
+
+    for key, wanted in COLUMNS.items():
+
+        wanted_norm = wanted.strip().lower()
+
+        # ------------------------------------------------------------------
+        # TARGET: require an exact match ("Ignition")
+        # ------------------------------------------------------------------
+        if key == "target":
+            if wanted_norm in normalized:
+                found[key] = normalized[wanted_norm]
+                continue
+
+            if require_target:
+                raise ValueError(
+                    f"Required target column '{wanted}' not found.\n"
+                    f"Available columns:\n{list(raw.columns)}"
+                )
+            continue
+
+        # ------------------------------------------------------------------
+        # EXACT MATCH
+        # ------------------------------------------------------------------
+        if wanted_norm in normalized:
+            found[key] = normalized[wanted_norm]
+            continue
+
+        # ------------------------------------------------------------------
+        # PREFIX MATCH
+        # ------------------------------------------------------------------
+        matches = [
+            c for c in raw.columns
+            if str(c).strip().lower().startswith(wanted_norm)
+        ]
+
+        if matches:
+            # Prefer the shortest match
+            matches.sort(key=len)
+            found[key] = matches[0]
+            continue
+
+        # ------------------------------------------------------------------
+        # OPTIONAL / REQUIRED
+        # ------------------------------------------------------------------
+        if require_target or key not in inference_optional:
+            raise ValueError(
+                f"Required database column {key!r} ({wanted!r}) is missing.\n"
+                f"Available columns:\n{list(raw.columns)}"
+            )
+
+    return found
+
+
+def read_raw(path: str | Path) -> tuple[pd.DataFrame, str]:
+    path = Path(path)
+    if not path.is_file():
+        raise FileNotFoundError(f"Dataset not found: {path.resolve()}")
+    errors = []
+    for encoding in ENCODINGS:
+        try:
+            raw = pd.read_csv(path, skiprows=1, encoding=encoding)
+            raw.columns = [str(c).strip() for c in raw.columns]
+            return raw, encoding
+        except UnicodeDecodeError as exc:
+            errors.append(f"{encoding}: {exc}")
+    raise UnicodeError(f"Could not decode {path} with {ENCODINGS}: {'; '.join(errors)}")
+
+
+def dataset_hash(path: str | Path) -> str:
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def feature_lists(feature_set: str) -> tuple[list[str], list[str]]:
+    if feature_set not in {"all", "physics"}:
+        raise ValueError("feature_set must be 'all' or 'physics'")
+    numeric = [name for name, role in NUMERIC_FEATURES.items()
+               if feature_set == "all" or role == "physics"]
+    categorical = [name for name, role in CATEGORICAL_FEATURES.items()
+                   if feature_set == "all" or role == "physics"]
+    return numeric, categorical
+
+
+def feature_manifest() -> list[dict[str, str]]:
+    return ([{"feature": k, "kind": "numeric", "role": v} for k, v in NUMERIC_FEATURES.items()] +
+            [{"feature": k, "kind": "categorical", "role": v} for k, v in CATEGORICAL_FEATURES.items()])
+
+
+def load_data(path: str | Path, require_target: bool = True, deduplicate: bool = True
+              ) -> tuple[pd.DataFrame, dict[str, Any]]:
+    raw, encoding = read_raw(path)
+    original_rows = len(raw)
+    blank_mask = raw.replace(r"^\s*$", np.nan, regex=True).isna().all(axis=1)
+    blank_source_rows = (raw.index[blank_mask] + 3).astype(int).tolist()
+    raw = raw.loc[~blank_mask].copy()
+    columns = _resolve(raw, require_target=require_target)
+    raw = raw.drop(columns=[c for c in raw if c.startswith("Unnamed")], errors="ignore")
+    for column in raw.select_dtypes(include="object"):
+        raw[column] = raw[column].map(_text)
     df = pd.DataFrame(index=raw.index)
-    df["ignition_binary"] = raw[cols["ignition"]].map(normalise_yes_no)
+    df["source_row_number"] = raw.index + 3
+    df["row_id"] = [f"row-{i:07d}" for i in df["source_row_number"]]
+    empty = pd.Series(np.nan, index=raw.index)
+    article_source = raw[columns["article"]] if "article" in columns else empty
+    authors_source = raw[columns["authors"]] if "authors" in columns else empty
+    doi_source = raw[columns["doi"]] if "doi" in columns else empty
+    df["raw_citation"] = article_source
+    df["raw_authors"] = authors_source
+    df["raw_doi"] = doi_source
+    doi = doi_source.map(canonical_doi)
+    citation = article_source.map(canonical_citation)
+    missing_identity = doi.isna() & citation.isna()
+    if require_target and missing_identity.any():
+        rows = df.loc[missing_identity, "source_row_number"].tolist()[:20]
+        raise ValueError(f"Rows lack both canonical DOI and citation identity: {rows}")
+    df["paper_id"] = doi.map(lambda x: f"doi::{x}" if pd.notna(x) else np.nan)
+    df["paper_id"] = df["paper_id"].fillna(citation.map(lambda x: f"citation::{x}"))
+    df.loc[df["paper_id"].isna(), "paper_id"] = df.loc[
+        df["paper_id"].isna(), "row_id"].map(lambda x: f"unknown::{x}")
+    df["paper_label"] = df["raw_citation"].fillna(df["paper_id"]).astype(str).str.slice(0, 100)
 
-    for logical, engineered in {
-        "fuel_density": "fuel_density_kg_m3",
-        "fuel_k": "fuel_k_w_mk",
-        "fuel_cp": "fuel_cp_j_kgk",
-        "fuel_pyroTemp": "fuel_pyrolysis_T_K",
-        "fuel_alpha": "fuel_alpha_m2_s",
-        "core_density": "core_density_kg_m3",
-        "core_k": "core_k_w_mk",
-        "core_cp": "core_cp_j_kgk",
-        "gas_molar_mass": "gas_molar_mass",
-        "gas_cp": "gas_cp_j_kgk",
-        "gas_k": "gas_k_w_mk",
-        "gas_density": "gas_density_kg_m3",
-        "gas_alpha": "gas_alpha_m2_s",
+    source_to_feature = {
+        "fuel_density": "fuel_density_kg_m3", "fuel_k": "fuel_k_w_mk",
+        "fuel_cp": "fuel_cp_j_kgk", "fuel_pyrolysis": "fuel_pyrolysis_t_k",
+        "fuel_alpha": "fuel_alpha_m2_s", "core_density": "core_density_kg_m3",
+        "core_k": "core_k_w_mk", "core_cp": "core_cp_j_kgk",
+        "gas_m": "gas_molar_mass", "gas_cp": "gas_cp_j_kgk", "gas_k": "gas_k_w_mk",
+        "gas_density": "gas_density_kg_m3", "gas_alpha": "gas_alpha_m2_s",
         "gas_nu": "gas_nu_m2_s",
-    }.items():
-        df[engineered] = pd.to_numeric(raw[cols[logical]], errors="coerce")
-
-    df["oxygen_fraction"] = raw[cols["o2"]].map(parse_oxygen_fraction)
-    df["pressure_kpa"] = raw[cols["pressure"]].map(parse_pressure_kpa)
-    df["flow_velocity_mm_s"] = raw[cols["flow"]].map(parse_flow_mm_s)
+    }
+    for source, feature in source_to_feature.items():
+        df[feature] = pd.to_numeric(raw[columns[source]], errors="coerce")
+    df["oxygen_fraction"] = raw[columns["oxygen"]].map(oxygen_fraction)
+    df["pressure_kpa"] = raw[columns["pressure"]].map(pressure_kpa)
+    df["flow_velocity_mm_s"] = raw[columns["flow"]].map(flow_mm_s)
     df["flow_speed_abs_mm_s"] = df["flow_velocity_mm_s"].abs()
-    df["gravity_g"] = raw[cols["gravity"]].map(parse_gravity_g)
+    df["gravity_g"] = raw[columns["gravity"]].map(gravity_g)
     df["log10_gravity_g"] = np.log10(df["gravity_g"].clip(lower=1e-8))
-    df["ignition_power_w"] = raw[cols["ig_power"]].map(parse_watts)
-    df["ignition_time_s"] = raw[cols["ig_time"]].map(parse_seconds)
+    df["ignition_power_w"] = raw[columns["ignition_power"]].map(watts)
+    df["ignition_time_s"] = raw[columns["ignition_time"]].map(_number)
     df["ignition_energy_j"] = df["ignition_power_w"] * df["ignition_time_s"]
 
-    sample_dims = raw[cols["dimensions"]].map(extract_dimensions_mm)
-    for i in range(3):
-        df[f"sample_dim_{i + 1}_mm"] = sample_dims.map(
-            lambda v, i=i: v[i] if len(v) > i else np.nan
-        )
-    df["sample_dim_min_mm"] = sample_dims.map(lambda v: np.nan if not v else float(np.nanmin(v)))
-    df["sample_dim_max_mm"] = sample_dims.map(lambda v: np.nan if not v else float(np.nanmax(v)))
-    df["sample_dim_mean_mm"] = sample_dims.map(lambda v: np.nan if not v else float(np.nanmean(v)))
+    sample_dims = raw[columns["dimensions"]].map(dimensions_mm)
+    internal_dims = raw[columns["internal_dimensions"]].map(dimensions_mm)
+    for prefix, values in (("sample", sample_dims), ("internal", internal_dims)):
+        for i in range(3):
+            df[f"{prefix}_dim_{i + 1}_mm"] = values.map(lambda x, i=i: x[i] if len(x) > i else np.nan)
+    df["sample_dim_min_mm"] = sample_dims.map(lambda x: min(x) if x else np.nan)
+    df["sample_dim_max_mm"] = sample_dims.map(lambda x: max(x) if x else np.nan)
+    df["sample_dim_mean_mm"] = sample_dims.map(lambda x: float(np.mean(x)) if x else np.nan)
     df["sample_dim_count"] = sample_dims.map(len).astype(float)
+    df["internal_dim_mean_mm"] = internal_dims.map(lambda x: float(np.mean(x)) if x else np.nan)
+    dimension_text = raw[columns["dimensions"]].fillna("").astype(str).str.lower()
+    core = dimension_text.str.extract(r"(?:core|inner)\D{0,20}(" + _NUM.pattern + r")")[0].astype(float)
+    outer = dimension_text.str.extract(r"(?:outer|outside)\D{0,20}(" + _NUM.pattern + r")")[0].astype(float)
+    df["core_diameter_mm"], df["outer_diameter_mm"] = core, outer
+    df["insulation_thickness_mm"] = (outer - core).where(outer >= core) / 2
 
-    core_outer = raw[cols["dimensions"]].map(parse_core_outer)
-    df["core_diameter_mm"] = core_outer.map(lambda t: t[0])
-    df["outer_diameter_mm"] = core_outer.map(lambda t: t[1])
-    df["insulation_thickness_mm"] = core_outer.map(lambda t: t[2])
+    df["geometry_cat"] = raw[columns["geometry"]].map(lambda x: _category(
+        x, {"Wire": ("wire",), "Flat": ("flat",), "Cylindrical": ("cyl",), "Spherical": ("spher",)}))
+    df["internal_geometry_cat"] = raw[columns["internal_geometry"]].map(lambda x: _category(
+        x, {"Rectangular": ("rect",), "Cylindrical": ("cyl", "circular", "annular")}))
+    df["ignition_method_cat"] = raw[columns["ignition_method"]].map(lambda x: _category(
+        x, {"Open Flame": ("open flame", "pilot", "match"), "Radiative Heater": ("radiative", "heater"),
+            "Discharge": ("discharge", "high-voltage"), "Wire / Coil": ("wire", "coil", "nicr", "electric")}))
+    df["facility_cat"] = raw[columns["facility"]].fillna("Unknown").astype(str)
+    df["diluent_cat"] = raw[columns["diluent"]].fillna("Unknown").astype(str)
+    df["flow_direction_cat"] = np.select(
+        [df["flow_velocity_mm_s"] > 0, df["flow_velocity_mm_s"] < 0,
+         df["flow_velocity_mm_s"] == 0], ["Coflow", "Counterflow", "Quiescent"], "Unknown")
+    df["gravity_regime_cat"] = np.select(
+        [df["gravity_g"] < .001, df["gravity_g"] < .95, df["gravity_g"] <= 1.05],
+        ["Microgravity", "Partial", "Earth"], "Hyper / Unknown")
 
-    internal_dims = raw[cols["internal_dims"]].map(extract_dimensions_mm)
-    for i in range(3):
-        df[f"internal_dim_{i + 1}_mm"] = internal_dims.map(
-            lambda v, i=i: v[i] if len(v) > i else np.nan
-        )
-    df["internal_dim_mean_mm"] = internal_dims.map(
-        lambda v: np.nan if not v else float(np.nanmean(v))
-    )
+    missing_target_rows: list[int] = []
+    if "target" in columns:
+        normalized = raw[columns["target"]].astype(str).str.strip().str.lower()
+        df["ignition_binary"] = normalized.map(
+            {"yes": 1, "y": 1, "1": 1, "true": 1, "no": 0, "n": 0, "0": 0, "false": 0})
+        missing_target_rows = df.loc[df["ignition_binary"].isna(), "source_row_number"].tolist()
+        if require_target and missing_target_rows:
+            raise ValueError(
+                f"{len(missing_target_rows)} rows have missing/unrecognized target labels; "
+                f"source rows include {missing_target_rows[:20]}. No rows were silently dropped."
+            )
+        if require_target:
+            df["ignition_binary"] = df["ignition_binary"].astype(int)
+    elif require_target:
+        raise ValueError("Target column is required for training/evaluation")
 
-    df["geometry_cat"] = raw[cols["geometry"]].map(normalise_geometry)
-    df["internal_geom_cat"] = raw[cols["internal_geom"]].map(normalise_internal_geometry)
-    df["ig_method_cat"] = raw[cols["ig_method"]].map(normalise_ignition_method)
-    df["diluent_cat"] = _group_rare(
-        raw[cols["diluent"]].fillna("Unknown").astype(str), min_count=10
-    )
-    df["flow_direction"] = df["flow_velocity_mm_s"].map(flow_direction)
-    df["gravity_regime"] = df["gravity_g"].map(gravity_regime)
-
-    # ---- canonical paper identity ----
-    doi_c = raw[cols["doi"]].map(canonical_doi)
-    art_c = raw[cols["article"]].map(canonical_article)
-    df["paper_id"] = doi_c.fillna("article::" + art_c.astype(str))
-    df["raw_citation"] = raw[cols["article"]]
-
-    # Short label: first author surname + year-ish token + doi tail
-    def _short_label(cit, pid):
-        c = str(cit) if pd.notna(cit) else str(pid)
-        first = re.split(r"[,.]", c)[0].strip()[:18]
-        m = re.search(r"\((\d{4})\)|\b(19|20)\d{2}\b", c)
-        year = m.group(0).strip("()") if m else "????"
-        tail = str(pid)[-12:]
-        return f"{first} {year} [{tail}]"
-
-    df["paper_label"] = [
-        _short_label(c, p) for c, p in zip(df["raw_citation"], df["paper_id"])
-    ]
-
-    # ---- final filtering ----
-    df = df[df["ignition_binary"].notna()].copy()
-    df["ignition_binary"] = df["ignition_binary"].astype(int)
-
-    if dedupe:
-        # Drop exact duplicates of (features + label) *within* a canonical
-        # paper. Replicate experiments with identical settings and identical
-        # outcome carry no extra ranking information but inflate that paper's
-        # weight; conflicting-outcome replicates (stochastic ignition
-        # boundary) are kept.
-        key_cols = ALL_NUMERIC + ALL_CATEGORICAL + ["ignition_binary", "paper_id"]
-        df = df.drop_duplicates(subset=key_cols).reset_index(drop=True)
-    else:
-        df = df.reset_index(drop=True)
-
-    return df
-
-
-def feature_lists(feature_set: str = "all") -> tuple[list[str], list[str]]:
-    """Return (numeric, categorical) feature lists for a named feature set.
-
-    * ``all``      — every engineered feature (v2-script parity).
-    * ``physics``  — physics-role features only (apparatus descriptors removed).
-    """
-    if feature_set == "all":
-        return list(ALL_NUMERIC), list(ALL_CATEGORICAL)
-    if feature_set == "physics":
-        return list(PHYSICS_NUMERIC), list(PHYSICS_CATEGORICAL)
-    raise ValueError(f"unknown feature_set {feature_set!r}")
+    features = list(NUMERIC_FEATURES) + list(CATEGORICAL_FEATURES)
+    duplicate_mask = df.duplicated(subset=features + (["ignition_binary"] if "ignition_binary" in df else []) +
+                                   ["paper_id"], keep="first")
+    duplicate_count = int(duplicate_mask.sum())
+    if deduplicate:
+        df = df.loc[~duplicate_mask].reset_index(drop=True)
+    report = {
+        "data_version": DATA_VERSION, "dataset_path": str(Path(path).resolve()),
+        "dataset_sha256": dataset_hash(path), "encoding": encoding,
+        "raw_row_count": original_rows, "row_count": len(df),
+        "blank_row_count": len(blank_source_rows),
+        "blank_source_rows": blank_source_rows,
+        "label_counts": ({str(k): int(v) for k, v in df["ignition_binary"].value_counts().items()}
+                         if "ignition_binary" in df else {}),
+        "missing_target_count": len(missing_target_rows),
+        "paper_count": int(df["paper_id"].nunique()), "duplicate_count": duplicate_count,
+        "missingness_by_model_feature": {c: int(df[c].isna().sum()) for c in features},
+        "feature_availability": {c: bool(df[c].notna().any()) for c in features},
+        "post_outcome_columns_excluded": [c for c in POST_OUTCOME_COLUMNS
+                                          if any(str(x).startswith(c) for x in raw.columns)],
+        "feature_manifest": feature_manifest(),
+    }
+    return df, report
 
 
-# ---------------------------------------------------------------------------
-# Paper-level weighting strategies
-# ---------------------------------------------------------------------------
-
-def paper_weights(paper_ids: pd.Series, strategy: str, beta: float = 0.999) -> np.ndarray:
-    """Per-row weights that re-balance the influence of papers.
-
-    Strategies (each normalised to mean weight = 1 so that the effective
-    learning rate / regularisation trade-off of XGBoost is unchanged):
-
-    * ``none``       — w = 1.
-    * ``inverse``    — w = 1 / N_paper        (every paper counts equally).
-    * ``sqrt``       — w = 1 / sqrt(N_paper)  (compromise; large campaigns
-                       still count more, but sub-linearly).
-    * ``effective``  — class-balanced "effective number of samples"
-                       (Cui et al., CVPR 2019) applied at the paper level:
-                       w = (1 - beta) / (1 - beta**N_paper). For beta -> 1
-                       this approaches ``inverse``; for beta -> 0, ``none``.
-    * ``log``        — w = 1 / (1 + ln N_paper). Statistically motivated by
-                       treating within-paper rows as exchangeable draws from
-                       a campaign-level cluster: the information content of a
-                       cluster grows roughly logarithmically once rows are
-                       strongly correlated.
-    """
-    n = paper_ids.map(paper_ids.value_counts()).to_numpy(dtype=float)
-    if strategy == "none":
-        w = np.ones_like(n)
-    elif strategy == "inverse":
-        w = 1.0 / n
-    elif strategy == "sqrt":
-        w = 1.0 / np.sqrt(n)
-    elif strategy == "effective":
-        w = (1.0 - beta) / (1.0 - np.power(beta, n))
-    elif strategy == "log":
-        w = 1.0 / (1.0 + np.log(n))
-    else:
-        raise ValueError(f"unknown paper weighting strategy {strategy!r}")
-    return w / w.mean()
+def write_validation_report(report: dict[str, Any], path: str | Path) -> None:
+    Path(path).write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
 
 
-def class_weights(y: pd.Series | np.ndarray) -> np.ndarray:
-    """Balanced per-row class weights, normalised to mean 1."""
-    y = np.asarray(y)
-    pos = max(int((y == 1).sum()), 1)
-    neg = max(int((y == 0).sum()), 1)
-    n = len(y)
-    w = np.where(y == 1, n / (2.0 * pos), n / (2.0 * neg)).astype(float)
-    return w / w.mean()
+def paper_weights(papers: pd.Series, strategy: str = "sqrt", beta: float = .999) -> np.ndarray:
+    counts = papers.map(papers.value_counts()).to_numpy(float)
+    if strategy == "none": weights = np.ones(len(papers))
+    elif strategy == "inverse": weights = 1 / counts
+    elif strategy == "sqrt": weights = 1 / np.sqrt(counts)
+    elif strategy == "effective": weights = (1 - beta) / (1 - beta ** counts)
+    elif strategy == "log": weights = 1 / (1 + np.log(counts))
+    else: raise ValueError(f"Unknown paper weighting strategy: {strategy}")
+    return weights / weights.mean()
 
 
-def combined_weights(
-    y: pd.Series | np.ndarray,
-    paper_ids: pd.Series,
-    paper_strategy: str = "sqrt",
-    use_class: bool = True,
-    beta: float = 0.999,
-) -> np.ndarray:
-    """weight = paper_weight x class_weight, normalised to mean 1."""
-    w = paper_weights(paper_ids, paper_strategy, beta=beta)
-    if use_class:
-        w = w * class_weights(y)
-    return w / w.mean()
+def combined_weights(y: np.ndarray, papers: pd.Series, paper_strategy: str,
+                     class_weight: bool) -> np.ndarray:
+    weights = paper_weights(papers, paper_strategy)
+    if class_weight:
+        y = np.asarray(y)
+        counts = np.bincount(y, minlength=2)
+        class_weights = np.array([len(y) / (2 * max(counts[i], 1)) for i in range(2)])
+        weights *= class_weights[y]
+    return weights / weights.mean()

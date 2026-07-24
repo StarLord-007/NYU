@@ -1,0 +1,16 @@
+candidate_id,model_family,feature_set,paper_weight,class_weight,fixed_params,weighting_policy,monotone_oxygen,paper_bagging
+xgb_all_unweighted,xgboost,all,none,False,"{""objective_variant"": ""logistic""}","{""class_weight"": false, ""paper_weight"": ""none"", ""unsupported_fit_weight_strategy"": ""deterministic_weighted_resampling""}",,
+xgb_physics_unweighted,xgboost,physics,none,False,"{""objective_variant"": ""logistic""}","{""class_weight"": false, ""paper_weight"": ""none"", ""unsupported_fit_weight_strategy"": ""deterministic_weighted_resampling""}",,
+xgb_all_class_paper_weighted,xgboost,all,sqrt,True,"{""objective_variant"": ""logistic""}","{""class_weight"": true, ""paper_weight"": ""sqrt"", ""unsupported_fit_weight_strategy"": ""deterministic_weighted_resampling""}",,
+xgb_physics_class_paper_weighted_monotone_o2,xgboost,physics,sqrt,True,"{""objective_variant"": ""logistic""}","{""class_weight"": true, ""paper_weight"": ""sqrt"", ""unsupported_fit_weight_strategy"": ""deterministic_weighted_resampling""}",True,
+xgb_all_focal_class_paper_weighted,xgboost,all,sqrt,True,"{""focal_gamma"": 2.0, ""objective_variant"": ""focal""}","{""class_weight"": true, ""paper_weight"": ""sqrt"", ""unsupported_fit_weight_strategy"": ""deterministic_weighted_resampling""}",,
+xgb_physics_focal_class_paper_weighted,xgboost,physics,sqrt,True,"{""focal_gamma"": 2.0, ""objective_variant"": ""focal""}","{""class_weight"": true, ""paper_weight"": ""sqrt"", ""unsupported_fit_weight_strategy"": ""deterministic_weighted_resampling""}",,
+xgb_physics_paper_bagging,xgboost,physics,sqrt,True,"{""objective_variant"": ""logistic""}","{""class_weight"": true, ""paper_weight"": ""sqrt"", ""unsupported_fit_weight_strategy"": ""deterministic_weighted_resampling""}",True,10.0
+knn_all,knn,all,sqrt,True,{},"{""class_weight"": true, ""paper_weight"": ""sqrt"", ""unsupported_fit_weight_strategy"": ""deterministic_weighted_resampling""}",,
+knn_physics,knn,physics,sqrt,True,{},"{""class_weight"": true, ""paper_weight"": ""sqrt"", ""unsupported_fit_weight_strategy"": ""deterministic_weighted_resampling""}",,
+decision_tree_all,decision_tree,all,sqrt,True,{},"{""class_weight"": true, ""paper_weight"": ""sqrt"", ""unsupported_fit_weight_strategy"": ""deterministic_weighted_resampling""}",,
+decision_tree_physics,decision_tree,physics,sqrt,True,{},"{""class_weight"": true, ""paper_weight"": ""sqrt"", ""unsupported_fit_weight_strategy"": ""deterministic_weighted_resampling""}",,
+mlp_all,mlp,all,sqrt,True,{},"{""class_weight"": true, ""paper_weight"": ""sqrt"", ""unsupported_fit_weight_strategy"": ""deterministic_weighted_resampling""}",,
+mlp_physics,mlp,physics,sqrt,True,{},"{""class_weight"": true, ""paper_weight"": ""sqrt"", ""unsupported_fit_weight_strategy"": ""deterministic_weighted_resampling""}",,
+svm_all,svm,all,sqrt,True,{},"{""class_weight"": true, ""paper_weight"": ""sqrt"", ""unsupported_fit_weight_strategy"": ""deterministic_weighted_resampling""}",,
+svm_physics,svm,physics,sqrt,True,{},"{""class_weight"": true, ""paper_weight"": ""sqrt"", ""unsupported_fit_weight_strategy"": ""deterministic_weighted_resampling""}",,
